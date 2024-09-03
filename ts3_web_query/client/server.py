@@ -1,7 +1,8 @@
-from typing import List, Union
+from typing import List, Union, Optional
 
 from . import HttpClient
-from ..types import ServerInfo, ServerList, TeamSpeakError
+from ..properties.server_create import ServerCreateProperties, ServerCreateResponse
+from ..types import ServerInfo, ServerListItem, TeamSpeakError
 
 
 class Server:
@@ -17,7 +18,7 @@ class Server:
             self,
             _all: bool = False,
             only_offline: bool = False
-    ) -> Union[List[ServerList], TeamSpeakError]:
+    ) -> Union[List[ServerListItem], TeamSpeakError]:
         """
         Displays a list of virtual servers including their ID, status, number of clients online, etc.
 
@@ -31,9 +32,8 @@ class Server:
         if only_offline:
             params.append('-onlyoffline')
         server_list = await self.http_client.request('serverlist', params=params)
-        print(server_list)
         if isinstance(server_list, list):
-            return [ServerList.from_dict(server) for server in server_list]
+            return [ServerListItem.from_dict(server) for server in server_list]
         else:
             return TeamSpeakError(**server_list)
 
@@ -70,9 +70,10 @@ class Server:
         :return: TeamSpeakError indicating success or failure.
         """
         response = await self.http_client.request('serverdelete', params={'sid': server_id})
+        print(response)
         return TeamSpeakError(**response)
 
-    async def server_create(self, name: str, properties: dict = None) -> Union[dict, TeamSpeakError]:
+    async def server_create(self, properties: ServerCreateProperties) -> Union[ServerCreateResponse, TeamSpeakError]:
         """
         Creates a new virtual server with the given name and properties.
 
@@ -80,12 +81,12 @@ class Server:
         :param properties: Optional properties for the server.
         :return: A dictionary with server details or a TeamSpeakError.
         """
-        params = {'virtualserver_name': name}
+        params = {}
         if properties:
             params.update(properties)
         response = await self.http_client.request('servercreate', params=params)
-        if 'sid' in response:
-            return response
+        if isinstance(response, list):
+            return ServerCreateResponse.from_dict(response[0])
         else:
             return TeamSpeakError(**response)
 
@@ -107,6 +108,7 @@ class Server:
         :return: TeamSpeakError indicating success or failure.
         """
         response = await self.http_client.request('serverstop', params={'sid': server_id})
+        print(response)
         return TeamSpeakError(**response)
 
     async def server_process_stop(self) -> TeamSpeakError:
