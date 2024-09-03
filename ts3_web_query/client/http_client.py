@@ -21,7 +21,7 @@ class HttpClient:
             instance_id (int): The instance ID for the API request. Defaults to 1.
         """
         self.api_url = api_url
-        self.instance_id = instance_id
+        self._instance_id = instance_id
         self.api_key = api_key
 
     @property
@@ -32,7 +32,7 @@ class HttpClient:
         Returns:
             int: The current instance ID.
         """
-        return self.instance_id
+        return self._instance_id
 
     @instance_id.setter
     def instance_id(self, value: int):
@@ -46,7 +46,7 @@ class HttpClient:
             ValueError: If the provided instance ID is not a positive integer.
         """
         if isinstance(value, int) and value > 0:
-            self.instance_id = value
+            self._instance_id = value
         else:
             raise ValueError("Instance ID must be a positive integer.")
 
