@@ -1,4 +1,5 @@
 import aiohttp
+from ..utils import build_request
 
 
 class HttpClient:
@@ -6,10 +7,11 @@ class HttpClient:
         self.api_url = api_url
         self.api_key = api_key
 
-    async def request(self, request_string: str):
+    async def request(self, command: str, params: dict | list | None = None):
         async with aiohttp.ClientSession() as session:
+            query = build_request(command, params)
             async with session.get(
-                    url=self.api_url + request_string,
+                    url=self.api_url + query,
                     headers={'x-api-key': self.api_key}
             ) as response:
                 json_data = await response.json()

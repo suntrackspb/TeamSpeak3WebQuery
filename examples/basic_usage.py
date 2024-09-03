@@ -10,7 +10,8 @@ load_dotenv()
 async def main():
     client = Client(
         api_url=os.getenv("TS3_API_URL"),
-        api_key=os.getenv("TS3_API_KEY"),)
+        api_key=os.getenv("TS3_API_KEY")
+    )
 
     # Работа с серверами
     print(await client.server.server_list())
