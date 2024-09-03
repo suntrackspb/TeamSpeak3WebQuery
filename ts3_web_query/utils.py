@@ -32,3 +32,9 @@ def build_request(command: str, params: dict | list | None = None) -> str:
         return f"{command}?{param_str}"
     else:
         return f"{command}"
+
+
+def lprint(args):
+    for arg in args:
+        print(arg)
+
