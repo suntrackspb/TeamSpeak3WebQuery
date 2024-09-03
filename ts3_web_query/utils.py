@@ -13,6 +13,6 @@ def build_request(command: str, params: dict | list | None = None) -> str:
 
     # Формируем итоговый запрос
     if param_str:
-        return f"/{command}?{param_str}"
+        return f"{command}?{param_str}"
     else:
-        return f"/{command}"
+        return f"{command}"
