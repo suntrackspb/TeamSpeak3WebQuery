@@ -1,0 +1,236 @@
+body {
+    background-color: #121212;
+    color: #E0E0E0;
+    text-align: left;
+    margin-left: 15px;
+    margin-right: 25px;
+}
+
+a:link {
+    color: #BB86FC;
+    text-decoration: none;
+}
+
+a:visited {
+    color: #8A8A8A;
+    text-decoration: underline;
+}
+
+a:hover {
+    color: #03DAC6;
+    text-decoration: none;
+}
+
+a:active {
+    color: #BB86FC;
+}
+
+p {
+    text-align: left;
+    font-family: Verdana, Geneva, sans-serif;
+    color: #E0E0E0;
+}
+
+h1 {
+    font-family: Verdana, Geneva, sans-serif;
+    color: #BB86FC;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    font-size: 185%;
+    margin-top: 75px;
+}
+
+h2, .function_name {
+    font-family: Verdana, Geneva, sans-serif;
+    color: #BB86FC;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    font-size: 150%;
+}
+
+.function_name {
+    margin-top: 0px;
+}
+
+.document_title {
+    font-family: Verdana, Geneva, sans-serif;
+    color: #BB86FC;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    font-size: 220%;
+    font-weight: 900;
+}
+
+.last_update {
+    font-family: Verdana, Geneva, sans-serif;
+    color: #BB86FC;
+    text-transform: uppercase;
+    letter-spacing: 0px;
+    font-size: 90%;
+}
+
+.copyright {
+    color: #E0E0E0;
+    font-style: normal;
+    font-family: Verdana, Geneva, sans-serif;
+}
+
+.function_desc {
+    white-space: normal;
+    font-family: Verdana, Geneva, sans-serif;
+    line-height: normal;
+    color: #E0E0E0;
+}
+
+.property_name {
+    text-transform: uppercase;
+    color: #E0E0E0;
+}
+
+.property_description {
+    font-style: italic;
+    display: inline;
+    color: #E0E0E0;
+}
+
+.subheading-permissions, .subheading-syntax, .subheading-example {
+    font-family: Verdana, Geneva, sans-serif;
+    font-weight: bold;
+    font-style: italic;
+    text-decoration: underline;
+    color: #BB86FC;
+}
+
+.function_perms {
+    white-space: pre-wrap;
+    font-family: Verdana, Geneva, sans-serif;
+}
+
+.function_example_input, .function_syntax {
+    white-space: pre-wrap;
+    font-family: Verdana, Geneva, sans-serif;
+    font-weight: lighter;
+    color: #E0E0E0;
+}
+
+.function_example_output {
+    white-space: pre-wrap;
+    font-family: Verdana, Geneva, sans-serif;
+    margin-top: 12px;
+    font-weight: lighter;
+    margin-left: 25px;
+    line-height: 20px;
+    color: #E0E0E0;
+}
+
+.enum_name, .enum_option_name, .enum_option_description, .enum_name_span, .enum_value, .enum {
+    font-family: Verdana, Geneva, sans-serif;
+    font-weight: lighter;
+}
+
+.enum_option_name, .enum_option_description {
+    display: inline;
+    font-family: Verdana, Geneva, sans-serif;
+}
+
+.enum_option_description {
+    margin-left: 100px;
+}
+
+.enum_value {
+    white-space: nowrap;
+}
+
+.enum_name_span {
+    width: 225px;
+    display: block;
+    float: left;
+}
+
+div.section {
+    margin-bottom: 50px;
+    font-family: Verdana, Geneva, sans-serif;
+}
+
+table {
+    width: 75%;
+    margin-top: 10px;
+    border-collapse: collapse;
+}
+
+.escaping table, td, th {
+    border: 2px solid #121212;
+    background-color: #333333;
+    padding: 5px;
+}
+
+.example_heading, .escaping th, .properties th {
+    text-transform: uppercase;
+    color: #121212;
+    background-color: #BB86FC;
+    text-align: left;
+}
+
+#toc {
+    list-style: none;
+    margin-bottom: 150px;
+    margin-right: 100px;
+}
+
+#toc li {
+    overflow: hidden;
+    padding-bottom: 2px;
+    font-weight: bold;
+    font-style: normal;
+    font-family: Verdana, Geneva, sans-serif;
+    text-transform: uppercase;
+    color: #E0E0E0;
+}
+
+#toc .sub_li {
+    margin-left: 10px;
+    overflow: hidden;
+    padding-bottom: 2px;
+    font-weight: normal;
+    font-style: normal;
+    text-transform: none;
+}
+
+#toc a,
+#toc span {
+    display: inline-block;
+    background: #121212;
+    position: relative;
+    bottom: -4px;
+}
+
+#toc a {
+    padding: 0 0 3px 2px;
+    color: #BB86FC;
+}
+
+#toc span {
+    float: left;
+    padding: 0 2px 3px 0;
+}
+
+#logo { 
+    position: absolute;
+    left: 80%;
+}
+
+code {
+    color: #BB86FC;
+    font-family: monospace;
+    font-weight: 500;
+}
+
+div.image_logo {
+    width: 450px;
+    height: 160px;
+    background-image: url('TeamSpeak_Logo.png');
+    background-repeat: no-repeat;
+    margin-left: auto; 
+    margin-right: auto; 
+    padding: 0; 
+}
