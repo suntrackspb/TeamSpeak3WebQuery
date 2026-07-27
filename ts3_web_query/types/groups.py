@@ -52,3 +52,18 @@ class ChannelGroupList(GroupBase):
             sortid=int(data['sortid']),
             type=int(data['type']),
         )
+
+
+@dataclass
+class ChannelGroupClient:
+    cid: int
+    cldbid: int
+    cgid: int
+
+    @staticmethod
+    def from_dict(data: dict) -> 'ChannelGroupClient':
+        return ChannelGroupClient(
+            cid=int(data.get('cid', 0)),
+            cldbid=int(data.get('cldbid', 0)),
+            cgid=int(data.get('cgid', 0)),
+        )
