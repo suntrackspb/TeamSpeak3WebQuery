@@ -1,5 +1,7 @@
 from urllib.parse import urlencode
 
+from .types.error import TeamSpeakError
+
 
 def build_request(command: str, params: dict | list | None = None) -> str:
     """
@@ -37,4 +39,28 @@ def build_request(command: str, params: dict | list | None = None) -> str:
 def lprint(args):
     for arg in args:
         print(arg)
+
+
+def status_to_error(response) -> TeamSpeakError:
+    """
+    Converts an HttpClient.request() response into a TeamSpeakError.
+
+    On success, commands without a return value have a ``None`` body (JSON
+    ``null``), which cannot be unpacked with ``**``. On failure, the response
+    is the status dict (``{"code": int, "message": str}``).
+
+    Parameters
+    ----------
+    response
+        The raw value returned by ``HttpClient.request()``.
+
+    Returns
+    -------
+    TeamSpeakError
+        ``TeamSpeakError(code=0, message='ok')`` if response is ``None``,
+        otherwise ``TeamSpeakError(**response)``.
+    """
+    if response is None:
+        return TeamSpeakError(code=0, message='ok')
+    return TeamSpeakError(**response)
 
