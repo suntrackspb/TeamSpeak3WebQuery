@@ -237,3 +237,113 @@ class ServerInfo:
             virtualserver_weblist_enabled=int(data.get('virtualserver_weblist_enabled', 0)),
             virtualserver_welcomemessage=str(data.get('virtualserver_welcomemessage', ''))
         )
+
+
+@dataclass
+class ConnectionInfo:
+    connection_filetransfer_bandwidth_sent: int
+    connection_filetransfer_bandwidth_received: int
+    connection_filetransfer_bytes_sent_total: int
+    connection_filetransfer_bytes_received_total: int
+    connection_packets_sent_total: int
+    connection_bytes_sent_total: int
+    connection_packets_received_total: int
+    connection_bytes_received_total: int
+    connection_bandwidth_sent_last_second_total: int
+    connection_bandwidth_sent_last_minute_total: int
+    connection_bandwidth_received_last_second_total: int
+    connection_bandwidth_received_last_minute_total: int
+    connection_connected_time: int
+    connection_packetloss_total: float
+    connection_ping: float
+
+    @staticmethod
+    def from_dict(data: dict) -> 'ConnectionInfo':
+        return ConnectionInfo(
+            connection_filetransfer_bandwidth_sent=int(data.get('connection_filetransfer_bandwidth_sent', 0)),
+            connection_filetransfer_bandwidth_received=int(data.get('connection_filetransfer_bandwidth_received', 0)),
+            connection_filetransfer_bytes_sent_total=int(data.get('connection_filetransfer_bytes_sent_total', 0)),
+            connection_filetransfer_bytes_received_total=int(data.get('connection_filetransfer_bytes_received_total', 0)),
+            connection_packets_sent_total=int(data.get('connection_packets_sent_total', 0)),
+            connection_bytes_sent_total=int(data.get('connection_bytes_sent_total', 0)),
+            connection_packets_received_total=int(data.get('connection_packets_received_total', 0)),
+            connection_bytes_received_total=int(data.get('connection_bytes_received_total', 0)),
+            connection_bandwidth_sent_last_second_total=int(data.get('connection_bandwidth_sent_last_second_total', 0)),
+            connection_bandwidth_sent_last_minute_total=int(data.get('connection_bandwidth_sent_last_minute_total', 0)),
+            connection_bandwidth_received_last_second_total=int(data.get('connection_bandwidth_received_last_second_total', 0)),
+            connection_bandwidth_received_last_minute_total=int(data.get('connection_bandwidth_received_last_minute_total', 0)),
+            connection_connected_time=int(data.get('connection_connected_time', 0)),
+            connection_packetloss_total=float(data.get('connection_packetloss_total', 0.0)),
+            connection_ping=float(data.get('connection_ping', 0.0)),
+        )
+
+
+@dataclass
+class ServerTempPassword:
+    nickname: str
+    uid: str
+    desc: str
+    pw_clear: str
+    start: int
+    end: int
+    tcid: int
+
+    @staticmethod
+    def from_dict(data: dict) -> 'ServerTempPassword':
+        return ServerTempPassword(
+            nickname=str(data.get('nickname', '')),
+            uid=str(data.get('uid', '')),
+            desc=str(data.get('desc', '')),
+            pw_clear=str(data.get('pw_clear', '')),
+            start=int(data.get('start', 0)),
+            end=int(data.get('end', 0)),
+            tcid=int(data.get('tcid', 0)),
+        )
+
+
+@dataclass
+class HostInfo:
+    instance_uptime: int
+    host_timestamp_utc: int
+    virtualservers_running_total: int
+    virtualservers_total_maxclients: int
+    virtualservers_total_clients_online: int
+    virtualservers_total_channels_online: int
+
+    @staticmethod
+    def from_dict(data: dict) -> 'HostInfo':
+        return HostInfo(
+            instance_uptime=int(data.get('instance_uptime', 0)),
+            host_timestamp_utc=int(data.get('host_timestamp_utc', 0)),
+            virtualservers_running_total=int(data.get('virtualservers_running_total', 0)),
+            virtualservers_total_maxclients=int(data.get('virtualservers_total_maxclients', 0)),
+            virtualservers_total_clients_online=int(data.get('virtualservers_total_clients_online', 0)),
+            virtualservers_total_channels_online=int(data.get('virtualservers_total_channels_online', 0)),
+        )
+
+
+@dataclass
+class WhoAmI:
+    virtualserver_status: str
+    virtualserver_id: int
+    virtualserver_unique_identifier: str
+    client_channel_id: int
+    client_id: int
+    client_database_id: int
+    client_login_name: str
+    client_unique_identifier: str
+    client_nickname: str
+
+    @staticmethod
+    def from_dict(data: dict) -> 'WhoAmI':
+        return WhoAmI(
+            virtualserver_status=str(data.get('virtualserver_status', '')),
+            virtualserver_id=int(data.get('virtualserver_id', 0)),
+            virtualserver_unique_identifier=str(data.get('virtualserver_unique_identifier', '')),
+            client_channel_id=int(data.get('client_channel_id', 0)),
+            client_id=int(data.get('client_id', 0)),
+            client_database_id=int(data.get('client_database_id', 0)),
+            client_login_name=str(data.get('client_login_name', '')),
+            client_unique_identifier=str(data.get('client_unique_identifier', '')),
+            client_nickname=str(data.get('client_nickname', '')),
+        )

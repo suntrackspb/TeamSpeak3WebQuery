@@ -1,6 +1,7 @@
 from typing import List
 
 from . import HttpClient
+from ..constants import GroupType
 from ..types import ChannelGroupList, TeamSpeakError
 
 
@@ -12,6 +13,6 @@ class ChannelGroup:
         groups = await self.http_client.request('channelgrouplist')
         if isinstance(groups, list):
             return [ChannelGroupList.from_dict(channel_group) for channel_group in groups if
-                    channel_group['type'] == "1"]
+                    int(channel_group['type']) == GroupType.REGULAR]
         else:
             return TeamSpeakError(**groups)

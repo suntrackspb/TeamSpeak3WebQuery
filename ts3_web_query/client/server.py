@@ -1,8 +1,16 @@
 from typing import List, Union, Optional
 
 from . import HttpClient
-from ..properties.server_create import ServerCreateProperties, ServerCreateResponse
-from ..types import ServerInfo, ServerListItem, TeamSpeakError
+from ..properties.server_create import ServerCreateProperties, ServerCreateResponse, ServerEditProperties
+from ..types import (
+    ServerInfo,
+    ServerListItem,
+    ConnectionInfo,
+    ServerTempPassword,
+    HostInfo,
+    WhoAmI,
+    TeamSpeakError,
+)
 
 
 class Server:
@@ -70,7 +78,6 @@ class Server:
         :return: TeamSpeakError indicating success or failure.
         """
         response = await self.http_client.request('serverdelete', params={'sid': server_id})
-        print(response)
         return TeamSpeakError(**response)
 
     async def server_create(self, properties: ServerCreateProperties) -> Union[ServerCreateResponse, TeamSpeakError]:
@@ -108,7 +115,6 @@ class Server:
         :return: TeamSpeakError indicating success or failure.
         """
         response = await self.http_client.request('serverstop', params={'sid': server_id})
-        print(response)
         return TeamSpeakError(**response)
 
     async def server_process_stop(self) -> TeamSpeakError:
@@ -119,3 +125,97 @@ class Server:
         """
         response = await self.http_client.request('serverprocessstop')
         return TeamSpeakError(**response)
+
+    async def server_request_connection_info(self) -> Union[ConnectionInfo, TeamSpeakError]:
+        """
+        Displays detailed connection information about the selected virtual server
+        including uptime, traffic information, etc.
+
+        :return: ConnectionInfo object or a TeamSpeakError.
+        """
+        response = await self.http_client.request('serverrequestconnectioninfo')
+        if isinstance(response, list):
+            return ConnectionInfo.from_dict(response[0])
+        else:
+            return TeamSpeakError(**response)
+
+    async def server_edit(self, properties: ServerEditProperties) -> TeamSpeakError:
+        """
+        Changes the selected virtual server's configuration using given properties.
+
+        :param properties: Properties to change on the selected virtual server.
+        :return: TeamSpeakError indicating success or failure.
+        """
+        response = await self.http_client.request('serveredit', params=dict(properties))
+        return TeamSpeakError(**response)
+
+    async def server_temp_password_add(
+            self,
+            pw: str,
+            desc: str,
+            duration: int,
+            tcid: int = 0,
+            tcpw: str = ''
+    ) -> TeamSpeakError:
+        """
+        Sets a new temporary server password. The client connecting with this
+        password will automatically join the channel specified with tcid.
+
+        :param pw: The temporary password.
+        :param desc: A description for the temporary password.
+        :param duration: Validity duration of the password in seconds.
+        :param tcid: The channel the client joins automatically. 0 = default channel.
+        :param tcpw: Password of the target channel, if it is protected.
+        :return: TeamSpeakError indicating success or failure.
+        """
+        params = {'pw': pw, 'desc': desc, 'duration': duration, 'tcid': tcid, 'tcpw': tcpw}
+        response = await self.http_client.request('servertemppasswordadd', params=params)
+        return TeamSpeakError(**response)
+
+    async def server_temp_password_del(self, pw: str) -> TeamSpeakError:
+        """
+        Deletes the temporary server password specified with pw.
+
+        :param pw: The temporary password to delete.
+        :return: TeamSpeakError indicating success or failure.
+        """
+        response = await self.http_client.request('servertemppassworddel', params={'pw': pw})
+        return TeamSpeakError(**response)
+
+    async def server_temp_password_list(self) -> Union[List[ServerTempPassword], TeamSpeakError]:
+        """
+        Returns a list of active temporary server passwords.
+
+        :return: List of ServerTempPassword objects or a TeamSpeakError.
+        """
+        response = await self.http_client.request('servertemppasswordlist')
+        if isinstance(response, list):
+            return [ServerTempPassword.from_dict(item) for item in response]
+        else:
+            return TeamSpeakError(**response)
+
+    async def host_info(self) -> Union[HostInfo, TeamSpeakError]:
+        """
+        Displays detailed connection information about the server instance
+        including uptime, number of virtual servers online, traffic information, etc.
+
+        :return: HostInfo object or a TeamSpeakError.
+        """
+        response = await self.http_client.request('hostinfo')
+        if isinstance(response, list):
+            return HostInfo.from_dict(response[0])
+        else:
+            return TeamSpeakError(**response)
+
+    async def whoami(self) -> Union[WhoAmI, TeamSpeakError]:
+        """
+        Displays information about the current ServerQuery/API connection,
+        including the currently selected virtual server.
+
+        :return: WhoAmI object or a TeamSpeakError.
+        """
+        response = await self.http_client.request('whoami')
+        if isinstance(response, list):
+            return WhoAmI.from_dict(response[0])
+        else:
+            return TeamSpeakError(**response)

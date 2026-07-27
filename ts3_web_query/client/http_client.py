@@ -1,5 +1,6 @@
 import aiohttp
 from ..utils import build_request
+from ..exceptions import TeamSpeakConnectionError
 
 
 class HttpClient:
@@ -23,6 +24,7 @@ class HttpClient:
         self.api_url = api_url
         self._instance_id = instance_id
         self.api_key = api_key
+        self._client_session: aiohttp.ClientSession | None = None
 
     @property
     def instance_id(self) -> int:
@@ -50,6 +52,16 @@ class HttpClient:
         else:
             raise ValueError("Instance ID must be a positive integer.")
 
+    def _session(self) -> aiohttp.ClientSession:
+        if self._client_session is None or self._client_session.closed:
+            self._client_session = aiohttp.ClientSession()
+        return self._client_session
+
+    async def close(self):
+        """Closes the underlying HTTP session, if one was opened."""
+        if self._client_session is not None and not self._client_session.closed:
+            await self._client_session.close()
+
     async def request(self, command: str, params: dict | list | None = None):
         """
         Makes an asynchronous GET request to the API.
@@ -59,21 +71,28 @@ class HttpClient:
             params (dict | list | None): The parameters to include in the request.
 
         Returns:
-            dict: The response body if the request is successful.
+            dict: The response body if the request is successful, or the
+                status dict (``{"code": int, "message": str}``) otherwise.
 
         Raises:
-            Exception: If the response status code is not 0.
+            TeamSpeakConnectionError: If the HTTP request fails or the response
+                is not valid JSON / does not contain a status field.
         """
-        async with aiohttp.ClientSession() as session:
-            query = build_request(command, params)
-            print(f'{self.api_url}/{self.instance_id}/{query}')
-            async with session.get(
+        query = build_request(command, params)
+        try:
+            async with self._session().get(
                     url=f'{self.api_url}/{self.instance_id}/{query}',
                     headers={'x-api-key': self.api_key}
             ) as response:
-                json_data = await response.json()
+                json_data = await response.json(content_type=None)
+        except aiohttp.ClientError as exc:
+            raise TeamSpeakConnectionError(str(exc)) from exc
 
-                if json_data.get("status").get("code") == 0:
-                    return json_data.get('body')
+        status = json_data.get("status") if isinstance(json_data, dict) else None
+        if not isinstance(status, dict):
+            raise TeamSpeakConnectionError(f"Unexpected response format: {json_data!r}")
 
-                return json_data.get("status")
+        if status.get("code") == 0:
+            return json_data.get('body')
+
+        return status
