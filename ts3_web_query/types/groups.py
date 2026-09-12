@@ -67,3 +67,33 @@ class ChannelGroupClient:
             cldbid=int(data.get('cldbid', 0)),
             cgid=int(data.get('cgid', 0)),
         )
+
+
+@dataclass
+class ServerGroupClient:
+    cldbid: int
+    client_nickname: str | None = None
+    client_unique_identifier: str | None = None
+
+    @staticmethod
+    def from_dict(data: dict) -> 'ServerGroupClient':
+        return ServerGroupClient(
+            cldbid=int(data.get('cldbid', 0)),
+            client_nickname=data.get('client_nickname'),
+            client_unique_identifier=data.get('client_unique_identifier'),
+        )
+
+
+@dataclass
+class ServerGroupByClient:
+    name: str
+    sgid: int
+    cldbid: int
+
+    @staticmethod
+    def from_dict(data: dict) -> 'ServerGroupByClient':
+        return ServerGroupByClient(
+            name=data['name'],
+            sgid=int(data['sgid']),
+            cldbid=int(data['cldbid']),
+        )
