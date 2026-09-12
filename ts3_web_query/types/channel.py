@@ -106,6 +106,7 @@ class ChannelPermission:
     permvalue: int
     permnegated: int
     permskip: int
+    permsid: str | None = None
 
     @staticmethod
     def from_dict(data: dict) -> 'ChannelPermission':
@@ -114,4 +115,5 @@ class ChannelPermission:
             permvalue=int(data.get('permvalue', 0)),
             permnegated=int(data.get('permnegated', 0)),
             permskip=int(data.get('permskip', 0)),
+            permsid=data.get('permsid'),
         )
