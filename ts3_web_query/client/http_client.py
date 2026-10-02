@@ -62,13 +62,16 @@ class HttpClient:
         if self._client_session is not None and not self._client_session.closed:
             await self._client_session.close()
 
-    async def request(self, command: str, params: dict | list | None = None):
+    async def request(self, command: str, params: dict | list | None = None, json_body: dict | None = None):
         """
         Makes an asynchronous GET request to the API.
 
         Args:
             command (str): The command or endpoint to append to the API URL.
             params (dict | list | None): The parameters to include in the request.
+            json_body (dict | None): If given, the command is sent as a POST with this JSON body
+                instead of a GET. Required for multi-value parameters (e.g. several ``clid``),
+                since WebQuery silently honours only the first of repeated query-string keys.
 
         Returns:
             dict: The response body if the request is successful, or the
@@ -79,10 +82,13 @@ class HttpClient:
                 is not valid JSON / does not contain a status field.
         """
         query = build_request(command, params)
+        method = 'POST' if json_body is not None else 'GET'
         try:
-            async with self._session().get(
+            async with self._session().request(
+                    method,
                     url=f'{self.api_url}/{self.instance_id}/{query}',
-                    headers={'x-api-key': self.api_key}
+                    headers={'x-api-key': self.api_key},
+                    json=json_body
             ) as response:
                 json_data = await response.json(content_type=None)
         except aiohttp.ClientError as exc:
