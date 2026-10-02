@@ -110,11 +110,8 @@ class ChannelGroup:
         :param permissions: Mapping of permid -> permvalue.
         :return: TeamSpeakError indicating success or failure.
         """
-        params = [f'cgid={cgid}']
-        for permid, permvalue in permissions.items():
-            params.append(f'permid={permid}')
-            params.append(f'permvalue={permvalue}')
-        response = await self.http_client.request('channelgroupaddperm', params=params)
+        body = [{'cgid': cgid, 'permid': permid, 'permvalue': permvalue} for permid, permvalue in permissions.items()]
+        response = await self.http_client.request('channelgroupaddperm', json_body=body)
         return status_to_error(response)
 
     async def channel_group_del_perm(self, cgid: int, permids: List[int]) -> TeamSpeakError:
@@ -125,8 +122,8 @@ class ChannelGroup:
         :param permids: List of permission IDs to remove.
         :return: TeamSpeakError indicating success or failure.
         """
-        params = [f'cgid={cgid}'] + [f'permid={permid}' for permid in permids]
-        response = await self.http_client.request('channelgroupdelperm', params=params)
+        body = [{'cgid': cgid, 'permid': permid} for permid in permids]
+        response = await self.http_client.request('channelgroupdelperm', json_body=body)
         return status_to_error(response)
 
     async def channel_group_client_list(
