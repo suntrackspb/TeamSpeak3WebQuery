@@ -112,13 +112,11 @@ class ServerGroup:
         :param permissions: Mapping of permid -> permvalue.
         :return: TeamSpeakError indicating success or failure.
         """
-        params = [f'sgid={sgid}']
-        for permid, permvalue in permissions.items():
-            params.append(f'permid={permid}')
-            params.append(f'permvalue={permvalue}')
-            params.append('permnegated=0')
-            params.append('permskip=0')
-        response = await self.http_client.request('servergroupaddperm', params=params)
+        body = [
+            {'sgid': sgid, 'permid': permid, 'permvalue': permvalue, 'permnegated': 0, 'permskip': 0}
+            for permid, permvalue in permissions.items()
+        ]
+        response = await self.http_client.request('servergroupaddperm', json_body=body)
         return status_to_error(response)
 
     async def server_group_del_perm(self, sgid: int, permids: List[int]) -> TeamSpeakError:
@@ -129,8 +127,8 @@ class ServerGroup:
         :param permids: List of permission IDs to remove.
         :return: TeamSpeakError indicating success or failure.
         """
-        params = [f'sgid={sgid}'] + [f'permid={permid}' for permid in permids]
-        response = await self.http_client.request('servergroupdelperm', params=params)
+        body = [{'sgid': sgid, 'permid': permid} for permid in permids]
+        response = await self.http_client.request('servergroupdelperm', json_body=body)
         return status_to_error(response)
 
     async def server_group_add_client(self, sgid: int, cldbid: int) -> TeamSpeakError:
@@ -207,13 +205,11 @@ class ServerGroup:
         :param permissions: Mapping of permid -> permvalue.
         :return: TeamSpeakError indicating success or failure.
         """
-        params = [f'sgtype={sgtype}']
-        for permid, permvalue in permissions.items():
-            params.append(f'permid={permid}')
-            params.append(f'permvalue={permvalue}')
-            params.append('permnegated=0')
-            params.append('permskip=0')
-        response = await self.http_client.request('servergroupautoaddperm', params=params)
+        body = [
+            {'sgtype': sgtype, 'permid': permid, 'permvalue': permvalue, 'permnegated': 0, 'permskip': 0}
+            for permid, permvalue in permissions.items()
+        ]
+        response = await self.http_client.request('servergroupautoaddperm', json_body=body)
         return status_to_error(response)
 
     async def server_group_auto_del_perm(self, sgtype: int, permids: List[int]) -> TeamSpeakError:
@@ -226,6 +222,6 @@ class ServerGroup:
         :param permids: List of permission IDs to remove.
         :return: TeamSpeakError indicating success or failure.
         """
-        params = [f'sgtype={sgtype}'] + [f'permid={permid}' for permid in permids]
-        response = await self.http_client.request('servergroupautodelperm', params=params)
+        body = [{'sgtype': sgtype, 'permid': permid} for permid in permids]
+        response = await self.http_client.request('servergroupautodelperm', json_body=body)
         return status_to_error(response)

@@ -127,11 +127,8 @@ class Channel:
             be added in a single call.
         :return: TeamSpeakError indicating success or failure.
         """
-        params = [f'cid={cid}']
-        for permid, permvalue in permissions.items():
-            params.append(f'permid={permid}')
-            params.append(f'permvalue={permvalue}')
-        response = await self.http_client.request('channeladdperm', params=params)
+        body = [{'cid': cid, 'permid': permid, 'permvalue': permvalue} for permid, permvalue in permissions.items()]
+        response = await self.http_client.request('channeladdperm', json_body=body)
         return status_to_error(response)
 
     async def channel_del_perm(self, cid: int, permids: List[int]) -> TeamSpeakError:
@@ -142,6 +139,6 @@ class Channel:
         :param permids: List of permission IDs to remove.
         :return: TeamSpeakError indicating success or failure.
         """
-        params = [f'cid={cid}'] + [f'permid={permid}' for permid in permids]
-        response = await self.http_client.request('channeldelperm', params=params)
+        body = [{'cid': cid, 'permid': permid} for permid in permids]
+        response = await self.http_client.request('channeldelperm', json_body=body)
         return status_to_error(response)
