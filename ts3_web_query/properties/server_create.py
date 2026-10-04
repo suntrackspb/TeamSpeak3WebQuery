@@ -61,3 +61,20 @@ class ServerCreateResponse:
             token=data['token'],
             virtualserver_port=int(data['virtualserver_port']),
         )
+
+
+class InstanceEditProperties(TypedDict, total=False):
+    """Properties accepted by ``instanceedit`` (server instance settings)."""
+    serverinstance_guest_serverquery_group: int
+    serverinstance_template_serveradmin_group: int
+    serverinstance_template_serverdefault_group: int
+    serverinstance_template_channeladmin_group: int
+    serverinstance_template_channeldefault_group: int
+    serverinstance_filetransfer_port: int
+    serverinstance_max_download_total_bandwidth: int
+    serverinstance_max_upload_total_bandwidth: int
+    serverinstance_serverquery_flood_commands: int
+    serverinstance_serverquery_flood_time: int
+    serverinstance_serverquery_ban_time: int
+    serverinstance_pending_connections_per_ip: int
+    serverinstance_serverquery_max_connections_per_ip: int

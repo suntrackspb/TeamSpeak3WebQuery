@@ -1,4 +1,4 @@
-from .server import ServerInfo, ServerListItem, ConnectionInfo, ServerTempPassword, HostInfo, WhoAmI
+from .server import ServerInfo, ServerListItem, ConnectionInfo, ServerTempPassword, HostInfo, WhoAmI, InstanceInfo, LogView, ServerSnapshot
 from .groups import ChannelGroupList, ServerGroupList, ChannelGroupClient, ServerGroupClient, ServerGroupByClient
 from .channel import ChannelListInfo, ChannelInfo, ChannelFindResult, ChannelPermission
 from .client import (ClientListItem, ClientInfo, ClientFindResult, ClientDbListItem, ClientDbInfo,

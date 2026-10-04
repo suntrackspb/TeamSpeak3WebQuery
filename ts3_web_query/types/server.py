@@ -347,3 +347,64 @@ class WhoAmI:
             client_unique_identifier=str(data.get('client_unique_identifier', '')),
             client_nickname=str(data.get('client_nickname', '')),
         )
+
+
+@dataclass
+class InstanceInfo:
+    """Result of ``instanceinfo``. Bandwidth limits are 2**64-1 when unlimited."""
+    serverinstance_database_version: int
+    serverinstance_filetransfer_port: int
+    serverinstance_max_download_total_bandwidth: int
+    serverinstance_max_upload_total_bandwidth: int
+    serverinstance_guest_serverquery_group: int
+    serverinstance_serverquery_flood_commands: int
+    serverinstance_serverquery_flood_time: int
+    serverinstance_serverquery_ban_time: int
+    serverinstance_serverquery_max_connections_per_ip: int
+    serverinstance_pending_connections_per_ip: int
+    serverinstance_template_serveradmin_group: int
+    serverinstance_template_serverdefault_group: int
+    serverinstance_template_channeladmin_group: int
+    serverinstance_template_channeldefault_group: int
+    serverinstance_permissions_version: int
+
+    @staticmethod
+    def from_dict(data: dict) -> 'InstanceInfo':
+        return InstanceInfo(**{
+            name: int(data.get(name, 0)) for name in InstanceInfo.__dataclass_fields__
+        })
+
+
+@dataclass
+class LogView:
+    """
+    Result of ``logview``. ``entries`` are raw log lines
+    (``timestamp|LEVEL|Module|server id|message``); ``last_pos`` and ``file_size`` can be used with
+    ``begin_pos`` to page through the log file.
+    """
+    entries: list[str]
+    last_pos: int
+    file_size: int
+
+    @staticmethod
+    def from_response(response: list[dict]) -> 'LogView':
+        meta = next((item for item in response if 'last_pos' in item), {})
+        return LogView(
+            entries=[str(item.get('l', '')) for item in response],
+            last_pos=int(meta.get('last_pos', 0)),
+            file_size=int(meta.get('file_size', 0)),
+        )
+
+
+@dataclass
+class ServerSnapshot:
+    """
+    Result of ``serversnapshotcreate``: opaque snapshot ``data`` (compressed, base64) and its
+    ``version``. Pass the object unchanged to ``server_snapshot_deploy``.
+    """
+    data: str
+    version: int
+
+    @staticmethod
+    def from_dict(data: dict) -> 'ServerSnapshot':
+        return ServerSnapshot(data=str(data.get('data', '')), version=int(data.get('version', 0)))
