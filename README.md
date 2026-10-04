@@ -4,7 +4,9 @@
 ServerQuery). Построена на `aiohttp`, команды возвращают типизированные dataclass-объекты.
 
 > **Статус: в разработке.** Пакет пока не опубликован на PyPI и устанавливается только из
-> исходников. Реализованная часть API перечислена ниже — остальное ещё не написано.
+> исходников. Покрыты все команды ServerQuery, которые WebQuery принимает (109 из 130
+> описанных в `docs/serverquery.html`); что не реализовано и почему — в разделе
+> «Чего нет» ниже.
 
 ## Требования
 
@@ -67,32 +69,46 @@ if result.code != 0:
 
 ## Что реализовано
 
-| Раздел | Атрибут `Client` | Команды |
+| Раздел | Атрибут `Client` | Методы |
 |---|---|---|
-| Виртуальные серверы | `client.server` | `server_list`, `server_info`, `server_id_get_by_port`, `server_create`, `server_edit`, `server_delete`, `server_start`, `server_stop`, `server_process_stop`, `server_request_connection_info`, `server_temp_password_add/del/list`, `host_info`, `whoami` |
-| Каналы | `client.channel` | `channel_list`, `channel_info`, `channel_find`, `channel_create`, `channel_edit`, `channel_move`, `channel_delete`, `channel_perm_list`, `channel_add_perm`, `channel_del_perm` |
+| Виртуальные серверы и инстанс | `client.server` | `server_list`, `server_info`, `server_id_get_by_port`, `server_create`, `server_edit`, `server_delete`, `server_start`, `server_stop`, `server_process_stop`, `server_request_connection_info`, `server_temp_password_add/del/list`, `host_info`, `whoami`, `version`, `instance_info`, `instance_edit`, `log_view`, `log_add`, `global_message`, `server_snapshot_create`, `server_snapshot_deploy` |
+| Каналы | `client.channel` | `channel_list`, `channel_info`, `channel_find`, `channel_create`, `channel_edit`, `channel_move`, `channel_delete`, `channel_perm_list`, `channel_add_perm`, `channel_del_perm`, `channel_client_perm_list`, `channel_client_add_perm`, `channel_client_del_perm` |
 | Группы каналов | `client.channel_group` | `channel_group_list`, `channel_group_add`, `channel_group_del`, `channel_group_copy`, `channel_group_rename`, `channel_group_perm_list`, `channel_group_add_perm`, `channel_group_del_perm`, `channel_group_client_list`, `set_client_channel_group` |
-| Группы сервера | `client.server_group` | `server_groups_list` (остальные команды группы — в работе) |
+| Группы сервера | `client.server_group` | `server_groups_list`, `server_group_add`, `server_group_del`, `server_group_copy`, `server_group_rename`, `server_group_perm_list`, `server_group_add_perm`, `server_group_del_perm`, `server_group_add_client`, `server_group_del_client`, `server_group_client_list`, `server_groups_by_client_id`, `server_group_auto_add_perm`, `server_group_auto_del_perm` |
+| Клиенты | `client.clients` | `client_list`, `client_info`, `client_find`, `client_edit`, `client_update`, `client_move`, `client_kick`, `client_poke`, `client_db_list`, `client_db_info`, `client_db_find`, `client_db_edit`, `client_db_delete`, `client_get_ids`, `client_get_dbid_from_uid`, `client_get_name_from_uid`, `client_get_uid_from_clid`, `client_get_name_from_dbid`, `client_set_serverquery_login`, `client_perm_list`, `client_add_perm`, `client_del_perm` |
+| Права и токены | `client.permission` | `permission_list`, `perm_id_get_by_name`, `perm_overview`, `perm_get`, `perm_find`, `perm_reset`, `privilege_key_list/add/delete/use`, `custom_search`, `custom_info` |
+| Сообщения, жалобы, баны | `client.messaging` | `send_text_message`, `send_private_message`, `message_list/add/del/get/update_flag`, `complain_list/add/del/del_all`, `ban_client`, `ban_list`, `ban_add`, `ban_del`, `ban_del_all` |
 
-## Чего ещё нет
+Методы с повторяющимися параметрами (несколько `clid`, наборов прав и т. п.) принимают списки;
+под капотом они уходят POST-запросом с JSON, потому что WebQuery молча применяет только первое
+значение из повторяющихся ключей query-строки.
 
-- Команды клиентов (`clientlist`, `clientinfo`, `clientkick`, `clientmove`, …)
-- Сообщения и офлайн-почта (`ts3_web_query/client/messaging.py` — заготовка)
-- Права (`ts3_web_query/client/permission.py` — заготовка)
-- Передача файлов (`ts3_web_query/client/filetransfer.py` — заготовка)
-- Баны, логи, снапшоты
-- Тесты и упаковка (`pyproject.toml`, публикация на PyPI)
+Пустой результат сервер отдаёт как ошибку 1281 (`database empty result set`), поэтому, например,
+`ban_list()` без банов вернёт `TeamSpeakError(code=1281, ...)`, а не пустой список.
 
-Пустые модули `permission`, `messaging`, `filetransfer` пока не подключены к фасаду `Client`.
+Некоторые операции опасны: `perm_reset` сбрасывает права виртуального сервера,
+`server_snapshot_deploy` пересоздаёт каналы и группы (их ID меняются), `ban_del_all` удаляет
+все баны.
+
+## Чего нет
+
+- Передача файлов (`ft*`, 9 команд): WebQuery отвечает `5120 out of scope` для любого
+  API-ключа, поэтому `ts3_web_query/client/filetransfer.py` остаётся пустой заглушкой.
+- `servernotifyregister` / `servernotifyunregister` — тоже недоступны в WebQuery (push-уведомления
+  не вписываются в HTTP request/response).
+- Команды raw-сессии `login`, `logout`, `use`, `quit`, `help`, `bindinglist` — не нужны:
+  авторизация идёт ключом `x-api-key`, сервер выбирается через `instance_id`.
+- Алиасы `tokenadd/tokendelete/tokenlist/tokenuse` — используйте `privilege_key_*`.
+- Тесты и упаковка (`pyproject.toml`, публикация на PyPI).
 
 ## Структура проекта
 
 ```
 ts3_web_query/
-  client/          # фасад Client + HTTP-слой + группы команд
+  client/          # фасад Client + HTTP-слой + группы команд (server, channel, client_management, ...)
   types/           # dataclass-модели ответов
   properties/      # TypedDict-наборы свойств для create/edit
-  constants.py     # ReasonId, TargetMode, GroupType
+  constants.py     # ReasonId, TargetMode, GroupType, LogLevel
   exceptions.py    # TeamSpeakAPIError, TeamSpeakConnectionError
   utils.py         # build_request, status_to_error
 docs/serverquery.html  # официальный референс ServerQuery
@@ -100,7 +116,7 @@ examples/basic_usage.py
 ```
 
 Особенности HTTP API относительно raw ServerQuery (авторизация через `x-api-key` вместо
-`login`/`use`, отсутствие экранирования, повторяющиеся ключи параметров) описаны в
+`login`/`use`, отсутствие экранирования, multi-value параметры через POST JSON) описаны в
 `.claude/IMPLEMENTATION_PLAN.md`.
 
 ## Лицензия
