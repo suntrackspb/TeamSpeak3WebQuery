@@ -1,6 +1,6 @@
-from typing import List, Union
+from typing import Union
 
-from . import HttpClient
+from .http_client import HttpClient
 from ..constants import GroupType
 from ..utils import status_to_error
 from ..types import ServerGroupList, ServerGroupClient, ServerGroupByClient, TeamSpeakError
@@ -11,12 +11,14 @@ class ServerGroup:
     def __init__(self, http_client: HttpClient):
         self.http_client = http_client
 
-    async def server_groups_list(self) -> Union[List[ServerGroupList], TeamSpeakError]:
+    async def server_groups_list(self) -> Union[list[ServerGroupList], TeamSpeakError]:
         server_groups = await self.http_client.request('servergrouplist')
         if isinstance(server_groups, list):
             return [ServerGroupList.from_dict(server_group) for server_group in server_groups if
                     int(server_group['type']) == GroupType.REGULAR]
         else:
+            if server_groups is None:
+                return []
             return TeamSpeakError(**server_groups)
 
     async def server_group_add(self, name: str, group_type: int = GroupType.REGULAR) -> Union[int, TeamSpeakError]:
@@ -83,7 +85,7 @@ class ServerGroup:
             self,
             sgid: int,
             permsid: bool = False
-    ) -> Union[List[ChannelPermission], TeamSpeakError]:
+    ) -> Union[list[ChannelPermission], TeamSpeakError]:
         """
         Displays a list of permissions assigned to the server group specified with sgid.
 
@@ -119,7 +121,7 @@ class ServerGroup:
         response = await self.http_client.request('servergroupaddperm', json_body=body)
         return status_to_error(response)
 
-    async def server_group_del_perm(self, sgid: int, permids: List[int]) -> TeamSpeakError:
+    async def server_group_del_perm(self, sgid: int, permids: list[int]) -> TeamSpeakError:
         """
         Removes a set of specified permissions from the server group.
 
@@ -159,7 +161,7 @@ class ServerGroup:
             self,
             sgid: int,
             names: bool = False
-    ) -> Union[List[ServerGroupClient], TeamSpeakError]:
+    ) -> Union[list[ServerGroupClient], TeamSpeakError]:
         """
         Displays the IDs of all clients currently residing in the server group specified with sgid.
 
@@ -180,7 +182,7 @@ class ServerGroup:
         else:
             return TeamSpeakError(**response)
 
-    async def server_groups_by_client_id(self, cldbid: int) -> Union[List[ServerGroupByClient], TeamSpeakError]:
+    async def server_groups_by_client_id(self, cldbid: int) -> Union[list[ServerGroupByClient], TeamSpeakError]:
         """
         Displays all server groups the client specified with cldbid is currently residing in.
 
@@ -212,7 +214,7 @@ class ServerGroup:
         response = await self.http_client.request('servergroupautoaddperm', json_body=body)
         return status_to_error(response)
 
-    async def server_group_auto_del_perm(self, sgtype: int, permids: List[int]) -> TeamSpeakError:
+    async def server_group_auto_del_perm(self, sgtype: int, permids: list[int]) -> TeamSpeakError:
         """
         Removes a set of specified permissions from *ALL* regular server groups on all
         virtual servers. The target groups are identified by the value of their

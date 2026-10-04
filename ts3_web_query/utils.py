@@ -36,11 +36,6 @@ def build_request(command: str, params: dict | list | None = None) -> str:
         return f"{command}"
 
 
-def lprint(args):
-    for arg in args:
-        print(arg)
-
-
 def status_to_error(response) -> TeamSpeakError:
     """
     Converts an HttpClient.request() response into a TeamSpeakError.

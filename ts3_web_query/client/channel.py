@@ -1,6 +1,6 @@
-from typing import List, Union
+from typing import Union
 
-from . import HttpClient
+from .http_client import HttpClient
 from ..properties.channel_create import ChannelCreateProperties, ChannelEditProperties
 from ..utils import status_to_error
 from ..types import ChannelListInfo, ChannelInfo, ChannelFindResult, ChannelPermission, TeamSpeakError
@@ -10,11 +10,13 @@ class Channel:
     def __init__(self, http_client: HttpClient):
         self.http_client = http_client
 
-    async def channel_list(self) -> Union[List[ChannelListInfo], TeamSpeakError]:
+    async def channel_list(self) -> Union[list[ChannelListInfo], TeamSpeakError]:
         channels = await self.http_client.request('channellist')
         if isinstance(channels, list):
             return [ChannelListInfo.from_dict(channel) for channel in channels]
         else:
+            if channels is None:
+                return []
             return TeamSpeakError(**channels)
 
     async def channel_info(self, cid: int) -> Union[ChannelInfo, TeamSpeakError]:
@@ -30,7 +32,7 @@ class Channel:
         else:
             return TeamSpeakError(**response)
 
-    async def channel_find(self, pattern: str) -> Union[List[ChannelFindResult], TeamSpeakError]:
+    async def channel_find(self, pattern: str) -> Union[list[ChannelFindResult], TeamSpeakError]:
         """
         Displays a list of channels matching a given name pattern.
 
@@ -41,6 +43,8 @@ class Channel:
         if isinstance(response, list):
             return [ChannelFindResult.from_dict(item) for item in response]
         else:
+            if response is None:
+                return []
             return TeamSpeakError(**response)
 
     async def channel_move(self, cid: int, cpid: int, order: int = 0) -> TeamSpeakError:
@@ -99,7 +103,7 @@ class Channel:
             self,
             cid: int,
             permsid: bool = False
-    ) -> Union[List[ChannelPermission], TeamSpeakError]:
+    ) -> Union[list[ChannelPermission], TeamSpeakError]:
         """
         Displays a list of permissions defined for a channel.
 
@@ -116,6 +120,8 @@ class Channel:
         if isinstance(response, list):
             return [ChannelPermission.from_dict(item) for item in response]
         else:
+            if response is None:
+                return []
             return TeamSpeakError(**response)
 
     async def channel_add_perm(self, cid: int, permissions: dict[int, int]) -> TeamSpeakError:
@@ -131,7 +137,7 @@ class Channel:
         response = await self.http_client.request('channeladdperm', json_body=body)
         return status_to_error(response)
 
-    async def channel_del_perm(self, cid: int, permids: List[int]) -> TeamSpeakError:
+    async def channel_del_perm(self, cid: int, permids: list[int]) -> TeamSpeakError:
         """
         Removes a set of specified permissions from a channel.
 
@@ -148,7 +154,7 @@ class Channel:
             cid: int,
             cldbid: int,
             permsid: bool = False
-    ) -> Union[List[ChannelPermission], TeamSpeakError]:
+    ) -> Union[list[ChannelPermission], TeamSpeakError]:
         """
         Lists the permissions defined for a client in a specific channel.
         Returns an error with code 1281 if there are none.
@@ -161,13 +167,15 @@ class Channel:
         response = await self.http_client.request('channelclientpermlist', params=params)
         if isinstance(response, list):
             return [ChannelPermission.from_dict(item) for item in response]
+        if response is None:
+            return []
         return TeamSpeakError(**response)
 
     async def channel_client_add_perm(
             self,
             cid: int,
             cldbid: int,
-            permissions: List[tuple[Union[int, str], int]]
+            permissions: list[tuple[Union[int, str], int]]
     ) -> TeamSpeakError:
         """
         Adds permissions to a client in a specific channel.
@@ -187,7 +195,7 @@ class Channel:
             self,
             cid: int,
             cldbid: int,
-            perms: List[Union[int, str]]
+            perms: list[Union[int, str]]
     ) -> TeamSpeakError:
         """
         Removes permissions from a client in a specific channel.

@@ -1,3 +1,6 @@
+import asyncio
+from typing import Any
+
 import aiohttp
 from ..utils import build_request
 from ..exceptions import TeamSpeakConnectionError
@@ -11,8 +14,9 @@ class HttpClient:
         api_url (str): The base URL of the API.
         api_key (str): The API key for authentication.
         instance_id (int): The instance ID for the API request.
+        timeout (float): Total timeout of a single request in seconds.
     """
-    def __init__(self, api_url: str, api_key: str, instance_id: int = 1):
+    def __init__(self, api_url: str, api_key: str, instance_id: int = 1, timeout: float = 30.0):
         """
         Initializes the HttpClient with the given API URL, API key, and instance ID.
 
@@ -20,8 +24,10 @@ class HttpClient:
             api_url (str): The base URL of the API.
             api_key (str): The API key for authentication.
             instance_id (int): The instance ID for the API request. Defaults to 1.
+            timeout (float): Total timeout of a single request in seconds. Defaults to 30.
         """
-        self.api_url = api_url
+        self.api_url = api_url.rstrip('/')
+        self.timeout = timeout
         self._instance_id = instance_id
         self.api_key = api_key
         self._client_session: aiohttp.ClientSession | None = None
@@ -54,7 +60,7 @@ class HttpClient:
 
     def _session(self) -> aiohttp.ClientSession:
         if self._client_session is None or self._client_session.closed:
-            self._client_session = aiohttp.ClientSession()
+            self._client_session = aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=self.timeout))
         return self._client_session
 
     async def close(self):
@@ -62,14 +68,19 @@ class HttpClient:
         if self._client_session is not None and not self._client_session.closed:
             await self._client_session.close()
 
-    async def request(self, command: str, params: dict | list | None = None, json_body: dict | None = None):
+    async def request(
+            self,
+            command: str,
+            params: dict | list | None = None,
+            json_body: dict | list[dict] | None = None
+    ) -> Any:
         """
         Makes an asynchronous GET request to the API.
 
         Args:
             command (str): The command or endpoint to append to the API URL.
             params (dict | list | None): The parameters to include in the request.
-            json_body (dict | None): If given, the command is sent as a POST with this JSON body
+            json_body (dict | list[dict] | None): If given, the command is sent as a POST with this JSON body
                 instead of a GET. Required for multi-value parameters (e.g. several ``clid``),
                 since WebQuery silently honours only the first of repeated query-string keys.
 
@@ -91,7 +102,7 @@ class HttpClient:
                     json=json_body
             ) as response:
                 json_data = await response.json(content_type=None)
-        except aiohttp.ClientError as exc:
+        except (aiohttp.ClientError, asyncio.TimeoutError) as exc:
             raise TeamSpeakConnectionError(str(exc)) from exc
 
         status = json_data.get("status") if isinstance(json_data, dict) else None

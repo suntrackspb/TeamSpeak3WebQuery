@@ -1,0 +1,66 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ts3-web-query"
+dynamic = ["version"]
+description = "Asynchronous, fully typed Python client for the TeamSpeak 3 HTTP WebQuery API"
+readme = "README.md"
+requires-python = ">=3.10"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{ name = "suntrackspb" }]
+keywords = ["teamspeak", "teamspeak3", "ts3", "webquery", "serverquery", "asyncio", "aiohttp"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Framework :: AsyncIO",
+    "Intended Audience :: Developers",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Topic :: Communications :: Chat",
+    "Topic :: Communications :: Conferencing",
+    "Typing :: Typed",
+]
+dependencies = ["aiohttp>=3.9,<4"]
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "pytest-asyncio>=0.23", "ruff", "mypy", "build", "twine"]
+examples = ["python-dotenv>=1.0"]
+
+[project.urls]
+Homepage = "https://github.com/suntrackspb/TeamSpeak3WebQuery"
+Repository = "https://github.com/suntrackspb/TeamSpeak3WebQuery"
+Issues = "https://github.com/suntrackspb/TeamSpeak3WebQuery/issues"
+
+[tool.setuptools.dynamic]
+version = { attr = "ts3_web_query.__version__" }
+
+[tool.setuptools.packages.find]
+include = ["ts3_web_query*"]
+
+[tool.setuptools.package-data]
+ts3_web_query = ["py.typed"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E4", "E7", "E9", "F", "B", "UP"]
+ignore = ["UP006", "UP007", "UP035", "UP045"]
+
+[tool.mypy]
+python_version = "3.10"
+ignore_missing_imports = true
+check_untyped_defs = true
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]

@@ -9,8 +9,17 @@ from .messaging import Messaging
 
 
 class Client:
-    def __init__(self, api_url: str, api_key: str, instance_id: int = 1):
-        self.http_client = HttpClient(api_url, api_key, instance_id)
+    """
+    Entry point of the library: one HTTP session shared by all command groups.
+
+    :param api_url: WebQuery base URL, e.g. ``http://127.0.0.1:10080``.
+    :param api_key: WebQuery API key (sent as ``x-api-key``).
+    :param instance_id: Virtual server ID (``sid``) the commands are sent to.
+    :param timeout: Total timeout of a single request in seconds.
+    """
+
+    def __init__(self, api_url: str, api_key: str, instance_id: int = 1, timeout: float = 30.0):
+        self.http_client = HttpClient(api_url, api_key, instance_id, timeout)
         self.server = Server(self.http_client)
         self.channel = Channel(self.http_client)
         self.channel_group = ChannelGroup(self.http_client)

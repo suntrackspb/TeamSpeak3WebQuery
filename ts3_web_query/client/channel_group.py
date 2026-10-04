@@ -1,6 +1,6 @@
-from typing import List, Union
+from typing import Union
 
-from . import HttpClient
+from .http_client import HttpClient
 from ..constants import GroupType
 from ..utils import status_to_error
 from ..types import ChannelGroupList, ChannelGroupClient, TeamSpeakError
@@ -11,12 +11,14 @@ class ChannelGroup:
     def __init__(self, http_client: HttpClient):
         self.http_client = http_client
 
-    async def channel_group_list(self) -> Union[List[ChannelGroupList], TeamSpeakError]:
+    async def channel_group_list(self) -> Union[list[ChannelGroupList], TeamSpeakError]:
         groups = await self.http_client.request('channelgrouplist')
         if isinstance(groups, list):
             return [ChannelGroupList.from_dict(channel_group) for channel_group in groups if
                     int(channel_group['type']) == GroupType.REGULAR]
         else:
+            if groups is None:
+                return []
             return TeamSpeakError(**groups)
 
     async def channel_group_add(self, name: str, group_type: int = GroupType.REGULAR) -> Union[int, TeamSpeakError]:
@@ -83,7 +85,7 @@ class ChannelGroup:
             self,
             cgid: int,
             permsid: bool = False
-    ) -> Union[List[ChannelPermission], TeamSpeakError]:
+    ) -> Union[list[ChannelPermission], TeamSpeakError]:
         """
         Displays a list of permissions assigned to the channel group specified with cgid.
 
@@ -100,6 +102,8 @@ class ChannelGroup:
         if isinstance(response, list):
             return [ChannelPermission.from_dict(item) for item in response]
         else:
+            if response is None:
+                return []
             return TeamSpeakError(**response)
 
     async def channel_group_add_perm(self, cgid: int, permissions: dict[int, int]) -> TeamSpeakError:
@@ -114,7 +118,7 @@ class ChannelGroup:
         response = await self.http_client.request('channelgroupaddperm', json_body=body)
         return status_to_error(response)
 
-    async def channel_group_del_perm(self, cgid: int, permids: List[int]) -> TeamSpeakError:
+    async def channel_group_del_perm(self, cgid: int, permids: list[int]) -> TeamSpeakError:
         """
         Removes a set of specified permissions from the channel group.
 
@@ -131,7 +135,7 @@ class ChannelGroup:
             cid: int | None = None,
             cldbid: int | None = None,
             cgid: int | None = None
-    ) -> Union[List[ChannelGroupClient], TeamSpeakError]:
+    ) -> Union[list[ChannelGroupClient], TeamSpeakError]:
         """
         Displays all the client and/or channel IDs currently assigned to channel groups.
         All parameters are optional.
@@ -152,6 +156,8 @@ class ChannelGroup:
         if isinstance(response, list):
             return [ChannelGroupClient.from_dict(item) for item in response]
         else:
+            if response is None:
+                return []
             return TeamSpeakError(**response)
 
     async def set_client_channel_group(self, cgid: int, cid: int, cldbid: int) -> TeamSpeakError:

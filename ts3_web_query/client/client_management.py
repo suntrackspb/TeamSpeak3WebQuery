@@ -1,6 +1,7 @@
-from typing import List, Union
+from typing import Union
+from urllib.parse import urlencode
 
-from . import HttpClient
+from .http_client import HttpClient
 from ..constants import ReasonId
 from ..utils import status_to_error
 from ..properties.client_edit import ClientEditProperties
@@ -33,7 +34,7 @@ class ClientManagement:
             return model.from_dict(response[0])
         return TeamSpeakError(**response)
 
-    async def client_list(self, flags: List[str] | None = None) -> Union[List[ClientListItem], TeamSpeakError]:
+    async def client_list(self, flags: list[str] | None = None) -> Union[list[ClientListItem], TeamSpeakError]:
         """
         Lists the clients that are currently online.
 
@@ -48,7 +49,7 @@ class ClientManagement:
         """Displays detailed configuration information about an online client."""
         return await self._one('clientinfo', ClientInfo, {'clid': clid})
 
-    async def client_find(self, pattern: str) -> Union[List[ClientFindResult], TeamSpeakError]:
+    async def client_find(self, pattern: str) -> Union[list[ClientFindResult], TeamSpeakError]:
         """Finds online clients whose nickname matches the pattern."""
         return await self._list('clientfind', ClientFindResult, {'pattern': pattern})
 
@@ -61,7 +62,7 @@ class ClientManagement:
             self,
             start: int | None = None,
             duration: int | None = None
-    ) -> Union[List[ClientDbListItem], TeamSpeakError]:
+    ) -> Union[list[ClientDbListItem], TeamSpeakError]:
         """
         Lists the client identities known by the server.
 
@@ -83,15 +84,15 @@ class ClientManagement:
             self,
             pattern: str,
             by_uid: bool = False
-    ) -> Union[List[ClientDbFindResult], TeamSpeakError]:
+    ) -> Union[list[ClientDbFindResult], TeamSpeakError]:
         """
         Finds client database entries matching the pattern (nickname, or unique ID with by_uid).
         Returns an error with code 1281 if nothing matches.
         """
-        params = [f'pattern={pattern}']
+        params = [urlencode({'pattern': pattern})]
         if by_uid:
             params.append('-uid')
-        return await self._list('clientdbfind', ClientDbFindResult, _quote_list(params))
+        return await self._list('clientdbfind', ClientDbFindResult, params)
 
     async def client_db_edit(self, cldbid: int, properties: ClientEditProperties) -> TeamSpeakError:
         """Changes a client's database settings using the given properties."""
@@ -103,7 +104,7 @@ class ClientManagement:
         response = await self.http_client.request('clientdbdelete', params={'cldbid': cldbid})
         return status_to_error(response)
 
-    async def client_get_ids(self, cluid: str) -> Union[List[ClientId], TeamSpeakError]:
+    async def client_get_ids(self, cluid: str) -> Union[list[ClientId], TeamSpeakError]:
         """Finds the online client IDs for a unique identifier."""
         return await self._list('clientgetids', ClientId, {'cluid': cluid})
 
@@ -143,7 +144,7 @@ class ClientManagement:
         response = await self.http_client.request('clientupdate', params=dict(properties))
         return status_to_error(response)
 
-    async def client_move(self, clids: List[int], cid: int, cpw: str | None = None) -> TeamSpeakError:
+    async def client_move(self, clids: list[int], cid: int, cpw: str | None = None) -> TeamSpeakError:
         """
         Moves one or more clients to a channel.
 
@@ -159,7 +160,7 @@ class ClientManagement:
 
     async def client_kick(
             self,
-            clids: List[int],
+            clids: list[int],
             reasonid: int = ReasonId.KICK_FROM_CHANNEL,
             reasonmsg: str | None = None
     ) -> TeamSpeakError:
@@ -185,7 +186,7 @@ class ClientManagement:
             self,
             cldbid: int,
             permsid: bool = False
-    ) -> Union[List[ChannelPermission], TeamSpeakError]:
+    ) -> Union[list[ChannelPermission], TeamSpeakError]:
         """
         Lists the permissions defined for a client. Returns an error with code 1281 if there are none.
 
@@ -194,7 +195,7 @@ class ClientManagement:
         params = [f'cldbid={cldbid}'] + (['-permsid'] if permsid else [])
         return await self._list('clientpermlist', ChannelPermission, params)
 
-    async def client_add_perm(self, cldbid: int, permissions: List[ClientPermEntry]) -> TeamSpeakError:
+    async def client_add_perm(self, cldbid: int, permissions: list[ClientPermEntry]) -> TeamSpeakError:
         """
         Adds permissions to a client.
 
@@ -208,17 +209,8 @@ class ClientManagement:
         response = await self.http_client.request('clientaddperm', json_body=body)
         return status_to_error(response)
 
-    async def client_del_perm(self, cldbid: int, perms: List[Union[int, str]]) -> TeamSpeakError:
+    async def client_del_perm(self, cldbid: int, perms: list[Union[int, str]]) -> TeamSpeakError:
         """Removes permissions from a client; an int is a permid, a str a permsid."""
         body = [{'cldbid': cldbid, 'permid' if isinstance(p, int) else 'permsid': p} for p in perms]
         response = await self.http_client.request('clientdelperm', json_body=body)
         return status_to_error(response)
-
-
-def _q(value) -> str:
-    from urllib.parse import quote
-    return quote(str(value), safe='')
-
-
-def _quote_list(params: List[str]) -> List[str]:
-    return [p if p.startswith('-') else f"{p.split('=', 1)[0]}={_q(p.split('=', 1)[1])}" for p in params]

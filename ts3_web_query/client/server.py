@@ -1,6 +1,6 @@
-from typing import List, Union, Optional
+from typing import Union
 
-from . import HttpClient
+from .http_client import HttpClient
 from ..properties.server_create import (
     ServerCreateProperties, ServerCreateResponse, ServerEditProperties, InstanceEditProperties,
 )
@@ -33,7 +33,7 @@ class Server:
             self,
             _all: bool = False,
             only_offline: bool = False
-    ) -> Union[List[ServerListItem], TeamSpeakError]:
+    ) -> Union[list[ServerListItem], TeamSpeakError]:
         """
         Displays a list of virtual servers including their ID, status, number of clients online, etc.
 
@@ -50,6 +50,8 @@ class Server:
         if isinstance(server_list, list):
             return [ServerListItem.from_dict(server) for server in server_list]
         else:
+            if server_list is None:
+                return []
             return TeamSpeakError(**server_list)
 
     async def server_info(self) -> Union[ServerInfo, TeamSpeakError]:
@@ -72,10 +74,9 @@ class Server:
         :return: Server ID or a TeamSpeakError.
         """
         response = await self.http_client.request('serveridgetbyport', params={'virtualserver_port': port})
-        if 'server_id' in response:
-            return response['server_id']
-        else:
-            return TeamSpeakError(**response)
+        if isinstance(response, list):
+            return int(response[0]['server_id'])
+        return TeamSpeakError(**response)
 
     async def server_delete(self, server_id: int) -> TeamSpeakError:
         """
@@ -95,7 +96,7 @@ class Server:
         :param properties: Optional properties for the server.
         :return: A dictionary with server details or a TeamSpeakError.
         """
-        params = {}
+        params: dict = {}
         if properties:
             params.update(properties)
         response = await self.http_client.request('servercreate', params=params)
@@ -189,7 +190,7 @@ class Server:
         response = await self.http_client.request('servertemppassworddel', params={'pw': pw})
         return status_to_error(response)
 
-    async def server_temp_password_list(self) -> Union[List[ServerTempPassword], TeamSpeakError]:
+    async def server_temp_password_list(self) -> Union[list[ServerTempPassword], TeamSpeakError]:
         """
         Returns a list of active temporary server passwords.
 
@@ -199,6 +200,8 @@ class Server:
         if isinstance(response, list):
             return [ServerTempPassword.from_dict(item) for item in response]
         else:
+            if response is None:
+                return []
             return TeamSpeakError(**response)
 
     async def host_info(self) -> Union[HostInfo, TeamSpeakError]:
@@ -316,7 +319,7 @@ class Server:
             self,
             snapshot: ServerSnapshot,
             mapping: bool = False
-    ) -> Union[List[dict], TeamSpeakError]:
+    ) -> Union[list[dict], TeamSpeakError]:
         """
         Restores the selected virtual server's configuration from a snapshot. The server does NOT
         check permissions while deploying, and the current channels and groups are replaced.

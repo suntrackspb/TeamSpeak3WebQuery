@@ -1,6 +1,6 @@
-from typing import List, Union
+from typing import Union
 
-from . import HttpClient
+from .http_client import HttpClient
 from ..utils import status_to_error
 from ..types import (
     TeamSpeakError, PermissionInfo, PermissionId, PermissionValue, PermissionOverview,
@@ -25,11 +25,11 @@ class Permission:
             return []
         return TeamSpeakError(**response)
 
-    async def permission_list(self) -> Union[List[PermissionInfo], TeamSpeakError]:
+    async def permission_list(self) -> Union[list[PermissionInfo], TeamSpeakError]:
         """Lists all permissions available on the server instance (ID, name, description)."""
         return await self._list('permissionlist', PermissionInfo)
 
-    async def perm_id_get_by_name(self, permsids: List[str]) -> Union[List[PermissionId], TeamSpeakError]:
+    async def perm_id_get_by_name(self, permsids: list[str]) -> Union[list[PermissionId], TeamSpeakError]:
         """
         Returns the IDs of one or more permissions.
 
@@ -42,8 +42,8 @@ class Permission:
             self,
             cid: int,
             cldbid: int,
-            perms: List[Union[int, str]] | None = None
-    ) -> Union[List[PermissionOverview], TeamSpeakError]:
+            perms: list[Union[int, str]] | None = None
+    ) -> Union[list[PermissionOverview], TeamSpeakError]:
         """
         Lists all permissions assigned to a client for a channel.
 
@@ -56,7 +56,7 @@ class Permission:
         body = [{'cid': cid, 'cldbid': cldbid, _perm_key(p): p} for p in perms]
         return await self._list('permoverview', PermissionOverview, json_body=body)
 
-    async def perm_get(self, perms: List[Union[int, str]]) -> Union[List[PermissionValue], TeamSpeakError]:
+    async def perm_get(self, perms: list[Union[int, str]]) -> Union[list[PermissionValue], TeamSpeakError]:
         """
         Returns the current value of permissions for your own connection.
 
@@ -65,7 +65,7 @@ class Permission:
         body = [{_perm_key(p): p} for p in perms]
         return await self._list('permget', PermissionValue, json_body=body)
 
-    async def perm_find(self, perms: List[Union[int, str]]) -> Union[List[PermissionAssignment], TeamSpeakError]:
+    async def perm_find(self, perms: list[Union[int, str]]) -> Union[list[PermissionAssignment], TeamSpeakError]:
         """
         Lists all assignments of the given permissions. Returns an error with code 1281
         if the permissions are not assigned anywhere.
@@ -88,7 +88,7 @@ class Permission:
             return str(response[0]['token'])
         return TeamSpeakError(**response)
 
-    async def privilege_key_list(self) -> Union[List[PrivilegeKey], TeamSpeakError]:
+    async def privilege_key_list(self) -> Union[list[PrivilegeKey], TeamSpeakError]:
         """Lists the privilege keys (tokens). Returns an error with code 1281 if there are none."""
         return await self._list('privilegekeylist', PrivilegeKey)
 
@@ -131,13 +131,13 @@ class Permission:
         response = await self.http_client.request('privilegekeyuse', params={'token': token})
         return status_to_error(response)
 
-    async def custom_search(self, ident: str, pattern: str) -> Union[List[CustomProperty], TeamSpeakError]:
+    async def custom_search(self, ident: str, pattern: str) -> Union[list[CustomProperty], TeamSpeakError]:
         """
         Searches custom client properties by ident and value pattern (SQL wildcards like % allowed).
         Returns an error with code 1281 if nothing matches.
         """
         return await self._list('customsearch', CustomProperty, params={'ident': ident, 'pattern': pattern})
 
-    async def custom_info(self, cldbid: int) -> Union[List[CustomProperty], TeamSpeakError]:
+    async def custom_info(self, cldbid: int) -> Union[list[CustomProperty], TeamSpeakError]:
         """Lists the custom properties of a client. Returns an error with code 1281 if there are none."""
         return await self._list('custominfo', CustomProperty, params={'cldbid': cldbid})

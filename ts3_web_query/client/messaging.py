@@ -1,6 +1,6 @@
-from typing import List, Union
+from typing import Union
 
-from . import HttpClient
+from .http_client import HttpClient
 from ..constants import TargetMode
 from ..utils import status_to_error
 from ..types import TeamSpeakError, Message, MessageContent, Complaint, BanEntry
@@ -20,10 +20,12 @@ class Messaging:
             return []
         return TeamSpeakError(**response)
 
-    async def _banids(self, command: str, params=None, json_body=None) -> Union[List[int], TeamSpeakError]:
+    async def _banids(self, command: str, params=None, json_body=None) -> Union[list[int], TeamSpeakError]:
         response = await self.http_client.request(command, params=params, json_body=json_body)
         if isinstance(response, list):
             return [int(item['banid']) for item in response]
+        if response is None:
+            return []
         return TeamSpeakError(**response)
 
     # --- text messages -------------------------------------------------------------------
@@ -47,7 +49,7 @@ class Messaging:
 
     # --- offline messages ----------------------------------------------------------------
 
-    async def message_list(self) -> Union[List[Message], TeamSpeakError]:
+    async def message_list(self) -> Union[list[Message], TeamSpeakError]:
         """Lists the offline messages in your inbox. Returns an error with code 1281 if it is empty."""
         return await self._list('messagelist', Message)
 
@@ -77,7 +79,7 @@ class Messaging:
 
     # --- complaints ----------------------------------------------------------------------
 
-    async def complain_list(self, tcldbid: int | None = None) -> Union[List[Complaint], TeamSpeakError]:
+    async def complain_list(self, tcldbid: int | None = None) -> Union[list[Complaint], TeamSpeakError]:
         """
         Lists complaints on the virtual server, optionally only those about one client.
         Returns an error with code 1281 if there are none.
@@ -104,10 +106,10 @@ class Messaging:
 
     async def ban_client(
             self,
-            clids: List[int],
+            clids: list[int],
             time: int | None = None,
             banreason: str | None = None
-    ) -> Union[List[int], TeamSpeakError]:
+    ) -> Union[list[int], TeamSpeakError]:
         """
         Bans one or more online clients. Two ban rules (IP and unique ID) are created per client.
 
@@ -123,7 +125,7 @@ class Messaging:
             body['banreason'] = banreason
         return await self._banids('banclient', json_body=body)
 
-    async def ban_list(self) -> Union[List[BanEntry], TeamSpeakError]:
+    async def ban_list(self) -> Union[list[BanEntry], TeamSpeakError]:
         """Lists the active ban rules. Returns an error with code 1281 if there are none."""
         return await self._list('banlist', BanEntry)
 
