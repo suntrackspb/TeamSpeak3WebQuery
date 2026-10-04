@@ -12,6 +12,9 @@ from ts3_web_query.types.server import ServerSnapshot
 from .conftest import fail, ok
 
 OK = TeamSpeakError(0, 'ok')
+# commands that address the whole instance: sent as /{command}, without a virtual server ID in the path
+INSTANCE_LEVEL = {'serverlist', 'serveridgetbyport', 'serverdelete', 'servercreate', 'serverstart', 'serverstop',
+                  'serverprocessstop', 'hostinfo', 'instanceinfo', 'instanceedit', 'version', 'gm'}
 NO_QUERY = ''
 
 
@@ -304,7 +307,7 @@ async def test_request_and_parsing(c, client, server):
 
     assert not isinstance(result, TeamSpeakError) or result == OK, result
     req = server.last
-    assert (req.method, req.command, req.sid) == (c.method, c.command, '1')
+    assert (req.method, req.command, req.sid) == (c.method, c.command, '' if c.command in INSTANCE_LEVEL else '1')
     assert req.query == c.query
     assert req.json == c.json
     assert req.headers['x-api-key'] == 'secret-key'

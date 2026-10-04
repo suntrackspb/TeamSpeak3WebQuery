@@ -51,7 +51,7 @@ async def server():
     async def handler(request: web.Request) -> web.Response:
         body = await request.json() if request.method == 'POST' else None
         command = request.match_info['command']
-        fake.requests.append(Req(request.method, request.match_info['sid'], command,
+        fake.requests.append(Req(request.method, request.match_info.get('sid', ''), command,
                                  request.query_string, dict(request.headers), body))
         if fake.delay:
             await asyncio.sleep(fake.delay)
@@ -59,6 +59,7 @@ async def server():
 
     app = web.Application()
     app.router.add_route('*', '/{sid}/{command}', handler)
+    app.router.add_route('*', '/{command}', handler)  # instance-level commands: no virtual server in the path
     runner = web.AppRunner(app)
     await runner.setup()
     site = web.TCPSite(runner, '127.0.0.1', 0)

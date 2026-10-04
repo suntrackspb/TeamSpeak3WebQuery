@@ -72,7 +72,8 @@ class HttpClient:
             self,
             command: str,
             params: dict | list | None = None,
-            json_body: dict | list[dict] | None = None
+            json_body: dict | list[dict] | None = None,
+            instance_level: bool = False
     ) -> Any:
         """
         Makes an asynchronous GET request to the API.
@@ -83,6 +84,9 @@ class HttpClient:
             json_body (dict | list[dict] | None): If given, the command is sent as a POST with this JSON body
                 instead of a GET. Required for multi-value parameters (e.g. several ``clid``),
                 since WebQuery silently honours only the first of repeated query-string keys.
+            instance_level (bool): If True, the command addresses the whole server instance and is sent
+                as ``/{command}`` without a virtual server ID in the path (``serverlist``, ``servercreate``,
+                ``serverdelete``, ``hostinfo``, ...). Otherwise it is sent as ``/{instance_id}/{command}``.
 
         Returns:
             dict: The response body if the request is successful, or the
@@ -93,11 +97,12 @@ class HttpClient:
                 is not valid JSON / does not contain a status field.
         """
         query = build_request(command, params)
+        path = query if instance_level else f'{self.instance_id}/{query}'
         method = 'POST' if json_body is not None else 'GET'
         try:
             async with self._session().request(
                     method,
-                    url=f'{self.api_url}/{self.instance_id}/{query}',
+                    url=f'{self.api_url}/{path}',
                     headers={'x-api-key': self.api_key},
                     json=json_body
             ) as response:

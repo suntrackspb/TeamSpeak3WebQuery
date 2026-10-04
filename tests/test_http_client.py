@@ -87,3 +87,11 @@ async def test_session_is_reused_and_close_is_idempotent(http, server):
     assert http._client_session is session
     await http.close()
     await http.close()
+
+
+async def test_instance_level_command_has_no_virtual_server_in_path(http, server):
+    server.reply('servercreate', ok([{'sid': '2'}]))
+    await http.request('servercreate', {'virtualserver_name': 'n'}, instance_level=True)
+    assert (server.last.sid, server.last.command) == ('', 'servercreate')
+    await http.request('servercreate', {'virtualserver_name': 'n'})
+    assert server.last.sid == '1'

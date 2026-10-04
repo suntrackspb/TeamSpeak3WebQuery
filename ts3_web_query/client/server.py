@@ -46,7 +46,7 @@ class Server:
             params.append('-all')
         if only_offline:
             params.append('-onlyoffline')
-        server_list = await self.http_client.request('serverlist', params=params)
+        server_list = await self.http_client.request('serverlist', instance_level=True, params=params)
         if isinstance(server_list, list):
             return [ServerListItem.from_dict(server) for server in server_list]
         else:
@@ -73,7 +73,7 @@ class Server:
         :param port: The UDP port of the virtual server.
         :return: Server ID or a TeamSpeakError.
         """
-        response = await self.http_client.request('serveridgetbyport', params={'virtualserver_port': port})
+        response = await self.http_client.request('serveridgetbyport', instance_level=True, params={'virtualserver_port': port})
         if isinstance(response, list):
             return int(response[0]['server_id'])
         return TeamSpeakError(**response)
@@ -85,7 +85,7 @@ class Server:
         :param server_id: The ID of the server to delete.
         :return: TeamSpeakError indicating success or failure.
         """
-        response = await self.http_client.request('serverdelete', params={'sid': server_id})
+        response = await self.http_client.request('serverdelete', instance_level=True, params={'sid': server_id})
         return status_to_error(response)
 
     async def server_create(self, properties: ServerCreateProperties) -> Union[ServerCreateResponse, TeamSpeakError]:
@@ -99,7 +99,7 @@ class Server:
         params: dict = {}
         if properties:
             params.update(properties)
-        response = await self.http_client.request('servercreate', params=params)
+        response = await self.http_client.request('servercreate', instance_level=True, params=params)
         if isinstance(response, list):
             return ServerCreateResponse.from_dict(response[0])
         else:
@@ -112,7 +112,7 @@ class Server:
         :param server_id: The ID of the server to start.
         :return: TeamSpeakError indicating success or failure.
         """
-        response = await self.http_client.request('serverstart', params={'sid': server_id})
+        response = await self.http_client.request('serverstart', instance_level=True, params={'sid': server_id})
         return status_to_error(response)
 
     async def server_stop(self, server_id: int) -> TeamSpeakError:
@@ -122,7 +122,7 @@ class Server:
         :param server_id: The ID of the server to stop.
         :return: TeamSpeakError indicating success or failure.
         """
-        response = await self.http_client.request('serverstop', params={'sid': server_id})
+        response = await self.http_client.request('serverstop', instance_level=True, params={'sid': server_id})
         return status_to_error(response)
 
     async def server_process_stop(self) -> TeamSpeakError:
@@ -131,7 +131,7 @@ class Server:
 
         :return: TeamSpeakError indicating success or failure.
         """
-        response = await self.http_client.request('serverprocessstop')
+        response = await self.http_client.request('serverprocessstop', instance_level=True)
         return status_to_error(response)
 
     async def server_request_connection_info(self) -> Union[ConnectionInfo, TeamSpeakError]:
@@ -211,7 +211,7 @@ class Server:
 
         :return: HostInfo object or a TeamSpeakError.
         """
-        response = await self.http_client.request('hostinfo')
+        response = await self.http_client.request('hostinfo', instance_level=True)
         if isinstance(response, list):
             return HostInfo.from_dict(response[0])
         else:
@@ -237,7 +237,7 @@ class Server:
 
         :return: InstanceInfo object or a TeamSpeakError.
         """
-        response = await self.http_client.request('instanceinfo')
+        response = await self.http_client.request('instanceinfo', instance_level=True)
         if isinstance(response, list):
             return InstanceInfo.from_dict(response[0])
         return TeamSpeakError(**response)
@@ -249,7 +249,7 @@ class Server:
         :param properties: Instance properties to change.
         :return: TeamSpeakError indicating success or failure.
         """
-        response = await self.http_client.request('instanceedit', params=dict(properties))
+        response = await self.http_client.request('instanceedit', instance_level=True, params=dict(properties))
         return status_to_error(response)
 
     async def log_view(
@@ -300,7 +300,7 @@ class Server:
         :param msg: The message text.
         :return: TeamSpeakError indicating success or failure.
         """
-        response = await self.http_client.request('gm', params={'msg': msg})
+        response = await self.http_client.request('gm', instance_level=True, params={'msg': msg})
         return status_to_error(response)
 
     async def server_snapshot_create(self) -> Union[ServerSnapshot, TeamSpeakError]:
@@ -343,7 +343,7 @@ class Server:
 
         :return: ServerVersion object or a TeamSpeakError.
         """
-        response = await self.http_client.request('version')
+        response = await self.http_client.request('version', instance_level=True)
         if isinstance(response, list):
             return ServerVersion.from_dict(response[0])
         return TeamSpeakError(**response)
