@@ -4,6 +4,7 @@ from .channel import Channel
 from .channel_group import ChannelGroup
 from .server_group import ServerGroup
 from .client_management import ClientManagement
+from .permission import Permission
 
 
 class Client:
@@ -14,6 +15,7 @@ class Client:
         self.channel_group = ChannelGroup(self.http_client)
         self.server_group = ServerGroup(self.http_client)
         self.clients = ClientManagement(self.http_client)
+        self.permission = Permission(self.http_client)
 
     async def close(self):
         """Closes the underlying HTTP session."""
