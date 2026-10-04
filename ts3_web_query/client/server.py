@@ -1,7 +1,9 @@
 from typing import List, Union, Optional
 
 from . import HttpClient
-from ..properties.server_create import ServerCreateProperties, ServerCreateResponse, ServerEditProperties
+from ..properties.server_create import (
+    ServerCreateProperties, ServerCreateResponse, ServerEditProperties, InstanceEditProperties,
+)
 from ..utils import status_to_error
 from ..types import (
     ServerInfo,
@@ -10,6 +12,9 @@ from ..types import (
     ServerTempPassword,
     HostInfo,
     WhoAmI,
+    InstanceInfo,
+    LogView,
+    ServerSnapshot,
     TeamSpeakError,
 )
 
@@ -220,3 +225,110 @@ class Server:
             return WhoAmI.from_dict(response[0])
         else:
             return TeamSpeakError(**response)
+
+    async def instance_info(self) -> Union[InstanceInfo, TeamSpeakError]:
+        """
+        Displays the server instance configuration (database revision, file transfer port,
+        default group IDs, flood settings, ...).
+
+        :return: InstanceInfo object or a TeamSpeakError.
+        """
+        response = await self.http_client.request('instanceinfo')
+        if isinstance(response, list):
+            return InstanceInfo.from_dict(response[0])
+        return TeamSpeakError(**response)
+
+    async def instance_edit(self, properties: InstanceEditProperties) -> TeamSpeakError:
+        """
+        Changes the server instance configuration using the given properties.
+
+        :param properties: Instance properties to change.
+        :return: TeamSpeakError indicating success or failure.
+        """
+        response = await self.http_client.request('instanceedit', params=dict(properties))
+        return status_to_error(response)
+
+    async def log_view(
+            self,
+            lines: int | None = None,
+            reverse: bool | None = None,
+            instance: bool | None = None,
+            begin_pos: int | None = None
+    ) -> Union[LogView, TeamSpeakError]:
+        """
+        Displays entries from the server log.
+
+        :param lines: Number of entries (1-100).
+        :param reverse: If True, return the newest entries first.
+        :param instance: If True, read the master log file instead of the virtual server log.
+        :param begin_pos: File position to start reading from (see LogView.last_pos).
+        :return: LogView object or a TeamSpeakError.
+        """
+        params = {}
+        if lines is not None:
+            params['lines'] = lines
+        if reverse is not None:
+            params['reverse'] = int(reverse)
+        if instance is not None:
+            params['instance'] = int(instance)
+        if begin_pos is not None:
+            params['begin_pos'] = begin_pos
+        response = await self.http_client.request('logview', params=params or None)
+        if isinstance(response, list):
+            return LogView.from_response(response)
+        return TeamSpeakError(**response)
+
+    async def log_add(self, loglevel: int, logmsg: str) -> TeamSpeakError:
+        """
+        Writes a custom entry into the server log.
+
+        :param loglevel: See LogLevel (1 error, 2 warning, 3 debug, 4 info).
+        :param logmsg: The log message.
+        :return: TeamSpeakError indicating success or failure.
+        """
+        response = await self.http_client.request('logadd', params={'loglevel': loglevel, 'logmsg': logmsg})
+        return status_to_error(response)
+
+    async def global_message(self, msg: str) -> TeamSpeakError:
+        """
+        Sends a text message to all clients on ALL virtual servers of the instance.
+
+        :param msg: The message text.
+        :return: TeamSpeakError indicating success or failure.
+        """
+        response = await self.http_client.request('gm', params={'msg': msg})
+        return status_to_error(response)
+
+    async def server_snapshot_create(self) -> Union[ServerSnapshot, TeamSpeakError]:
+        """
+        Creates a snapshot of the selected virtual server (settings, groups, channels, known
+        client identities).
+
+        :return: ServerSnapshot object or a TeamSpeakError.
+        """
+        response = await self.http_client.request('serversnapshotcreate')
+        if isinstance(response, list):
+            return ServerSnapshot.from_dict(response[0])
+        return TeamSpeakError(**response)
+
+    async def server_snapshot_deploy(
+            self,
+            snapshot: ServerSnapshot,
+            mapping: bool = False
+    ) -> Union[List[dict], TeamSpeakError]:
+        """
+        Restores the selected virtual server's configuration from a snapshot. The server does NOT
+        check permissions while deploying, and the current channels and groups are replaced.
+
+        :param snapshot: A snapshot returned by server_snapshot_create.
+        :param mapping: If True, the server also returns the old-to-new channel/group ID mapping.
+        :return: The raw mapping entries (empty list without mapping) or a TeamSpeakError.
+        """
+        body = {'data': snapshot.data, 'version': snapshot.version}
+        response = await self.http_client.request(
+            'serversnapshotdeploy', params=['-mapping'] if mapping else None, json_body=body)
+        if response is None:
+            return []
+        if isinstance(response, list):
+            return response
+        return TeamSpeakError(**response)

@@ -142,3 +142,59 @@ class Channel:
         body = [{'cid': cid, 'permid': permid} for permid in permids]
         response = await self.http_client.request('channeldelperm', json_body=body)
         return status_to_error(response)
+
+    async def channel_client_perm_list(
+            self,
+            cid: int,
+            cldbid: int,
+            permsid: bool = False
+    ) -> Union[List[ChannelPermission], TeamSpeakError]:
+        """
+        Lists the permissions defined for a client in a specific channel.
+        Returns an error with code 1281 if there are none.
+
+        :param cid: The ID of the channel.
+        :param cldbid: The client database ID.
+        :param permsid: If True, return permission names (permsid) instead of numeric IDs.
+        """
+        params = [f'cid={cid}', f'cldbid={cldbid}'] + (['-permsid'] if permsid else [])
+        response = await self.http_client.request('channelclientpermlist', params=params)
+        if isinstance(response, list):
+            return [ChannelPermission.from_dict(item) for item in response]
+        return TeamSpeakError(**response)
+
+    async def channel_client_add_perm(
+            self,
+            cid: int,
+            cldbid: int,
+            permissions: List[tuple[Union[int, str], int]]
+    ) -> TeamSpeakError:
+        """
+        Adds permissions to a client in a specific channel.
+
+        :param permissions: List of (perm, value) tuples; an int perm is a permid, a str a permsid.
+        :return: TeamSpeakError indicating success or failure.
+        """
+        body = [
+            {'cid': cid, 'cldbid': cldbid, 'permid' if isinstance(perm, int) else 'permsid': perm,
+             'permvalue': value}
+            for perm, value in permissions
+        ]
+        response = await self.http_client.request('channelclientaddperm', json_body=body)
+        return status_to_error(response)
+
+    async def channel_client_del_perm(
+            self,
+            cid: int,
+            cldbid: int,
+            perms: List[Union[int, str]]
+    ) -> TeamSpeakError:
+        """
+        Removes permissions from a client in a specific channel.
+
+        :param perms: Permissions to remove; an int is a permid, a str a permsid.
+        :return: TeamSpeakError indicating success or failure.
+        """
+        body = [{'cid': cid, 'cldbid': cldbid, 'permid' if isinstance(p, int) else 'permsid': p} for p in perms]
+        response = await self.http_client.request('channelclientdelperm', json_body=body)
+        return status_to_error(response)

@@ -16,3 +16,11 @@ class GroupType:
     TEMPLATE = 0
     REGULAR = 1
     QUERY = 2
+
+
+class LogLevel:
+    """Log level for logadd."""
+    ERROR = 1
+    WARNING = 2
+    DEBUG = 3
+    INFO = 4
