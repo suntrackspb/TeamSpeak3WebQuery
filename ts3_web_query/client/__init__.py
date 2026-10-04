@@ -4,4 +4,5 @@ from .channel import Channel
 from .channel_group import ChannelGroup
 from .server_group import ServerGroup
 from .client_management import ClientManagement
+from .permission import Permission
 from .client import Client
