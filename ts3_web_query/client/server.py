@@ -15,6 +15,7 @@ from ..types import (
     InstanceInfo,
     LogView,
     ServerSnapshot,
+    ServerVersion,
     TeamSpeakError,
 )
 
@@ -331,4 +332,15 @@ class Server:
             return []
         if isinstance(response, list):
             return response
+        return TeamSpeakError(**response)
+
+    async def version(self) -> Union[ServerVersion, TeamSpeakError]:
+        """
+        Displays the server's version information including platform and build number.
+
+        :return: ServerVersion object or a TeamSpeakError.
+        """
+        response = await self.http_client.request('version')
+        if isinstance(response, list):
+            return ServerVersion.from_dict(response[0])
         return TeamSpeakError(**response)

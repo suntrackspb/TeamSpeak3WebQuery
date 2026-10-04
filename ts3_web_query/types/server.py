@@ -408,3 +408,19 @@ class ServerSnapshot:
     @staticmethod
     def from_dict(data: dict) -> 'ServerSnapshot':
         return ServerSnapshot(data=str(data.get('data', '')), version=int(data.get('version', 0)))
+
+
+@dataclass
+class ServerVersion:
+    """Result of ``version``: server version, platform and build number."""
+    version: str
+    platform: str
+    build: int
+
+    @staticmethod
+    def from_dict(data: dict) -> 'ServerVersion':
+        return ServerVersion(
+            version=str(data.get('version', '')),
+            platform=str(data.get('platform', '')),
+            build=int(data.get('build', 0)),
+        )
