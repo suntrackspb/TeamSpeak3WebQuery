@@ -46,8 +46,10 @@ def status_to_error(response) -> TeamSpeakError:
     Converts an HttpClient.request() response into a TeamSpeakError.
 
     On success, commands without a return value have a ``None`` body (JSON
-    ``null``), which cannot be unpacked with ``**``. On failure, the response
-    is the status dict (``{"code": int, "message": str}``).
+    ``null``), which cannot be unpacked with ``**``. Some commands (e.g. a private
+    ``sendtextmessage``) answer with a non-empty list body that only echoes a
+    notification; that is a success too. On failure, the response is the status
+    dict (``{"code": int, "message": str}``).
 
     Parameters
     ----------
@@ -57,10 +59,10 @@ def status_to_error(response) -> TeamSpeakError:
     Returns
     -------
     TeamSpeakError
-        ``TeamSpeakError(code=0, message='ok')`` if response is ``None``,
+        ``TeamSpeakError(code=0, message='ok')`` if response is ``None`` or a list,
         otherwise ``TeamSpeakError(**response)``.
     """
-    if response is None:
+    if response is None or isinstance(response, list):
         return TeamSpeakError(code=0, message='ok')
     return TeamSpeakError(**response)
 

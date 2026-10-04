@@ -5,4 +5,5 @@ from .client import (ClientListItem, ClientInfo, ClientFindResult, ClientDbListI
                      ClientDbFindResult, ClientId, ClientDbName, ClientUid)
 from .permission import (PermissionInfo, PermissionId, PermissionValue, PermissionOverview,
                          PermissionAssignment, PrivilegeKey, CustomProperty)
+from .messaging import Message, MessageContent, Complaint, BanEntry
 from .error import TeamSpeakError
