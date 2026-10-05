@@ -67,7 +67,7 @@ jobs:
         run: |
           python -m venv /tmp/venv
           /tmp/venv/bin/pip install dist/*.whl
-          /tmp/venv/bin/python -c "from ts3_web_query import Client, TeamSpeakError, TeamSpeakConnectionError, __version__; print(__version__)"
+          /tmp/venv/bin/python -c "from ts3_web_query import Client, TeamSpeakAPIError, TeamSpeakConnectionError, __version__; print(__version__)"
       - uses: actions/upload-artifact@v4
         with:
           name: dist
