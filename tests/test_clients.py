@@ -1,5 +1,7 @@
+import pytest
+
+from ts3_web_query import TeamSpeakAPIError
 from ts3_web_query.constants import ReasonId
-from ts3_web_query.types import TeamSpeakError
 
 from .conftest import fail, ok
 
@@ -22,13 +24,15 @@ async def test_client_list_empty_body(client, server):
 
 async def test_client_info_error(client, server):
     server.reply('clientinfo', fail(512, 'invalid clientID'))
-    assert await client.clients.client_info(99) == TeamSpeakError(512, 'invalid clientID')
+    with pytest.raises(TeamSpeakAPIError) as exc_info:
+        await client.clients.client_info(99)
+    assert (exc_info.value.code, exc_info.value.message) == (512, 'invalid clientID')
 
 
 async def test_client_move_posts_array_of_clids(client, server):
     server.reply('clientmove', ok())
     result = await client.clients.client_move([3, 4], 2, cpw='pw')
-    assert result == TeamSpeakError(0, 'ok')
+    assert result is None
     assert server.last.method == 'POST'
     assert server.last.json == {'clid': [3, 4], 'cid': 2, 'cpw': 'pw'}
 

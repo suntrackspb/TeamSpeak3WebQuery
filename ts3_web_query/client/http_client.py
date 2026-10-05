@@ -3,7 +3,10 @@ from typing import Any
 
 import aiohttp
 from ..utils import build_request
-from ..exceptions import TeamSpeakConnectionError
+from ..exceptions import TeamSpeakAPIError, TeamSpeakConnectionError
+
+
+EMPTY_RESULT = 1281  # "database empty result set"
 
 
 class HttpClient:
@@ -76,7 +79,7 @@ class HttpClient:
             instance_level: bool = False
     ) -> Any:
         """
-        Makes an asynchronous GET request to the API.
+        Makes an asynchronous GET (or, with ``json_body``, POST) request to the API.
 
         Args:
             command (str): The command or endpoint to append to the API URL.
@@ -89,10 +92,10 @@ class HttpClient:
                 ``serverdelete``, ``hostinfo``, ...). Otherwise it is sent as ``/{instance_id}/{command}``.
 
         Returns:
-            dict: The response body if the request is successful, or the
-                status dict (``{"code": int, "message": str}``) otherwise.
+            The ``body`` of the response (a list of rows, or ``None`` if the command returns nothing).
 
         Raises:
+            TeamSpeakAPIError: If the server answers with an error status.
             TeamSpeakConnectionError: If the HTTP request fails or the response
                 is not valid JSON / does not contain a status field.
         """
@@ -117,4 +120,23 @@ class HttpClient:
         if status.get("code") == 0:
             return json_data.get('body')
 
-        return status
+        raise TeamSpeakAPIError(int(status.get('code', -1)), str(status.get('message', '')), status.get('extra_message'))
+
+    async def request_list(
+            self,
+            command: str,
+            params: dict | list | None = None,
+            json_body: dict | list[dict] | None = None,
+            instance_level: bool = False
+    ) -> list[dict]:
+        """
+        Like :meth:`request`, for commands that return rows. An empty result is normalised to ``[]``:
+        TeamSpeak reports it either as a ``null`` body or as error 1281 (database empty result set).
+        """
+        try:
+            body = await self.request(command, params, json_body, instance_level)
+        except TeamSpeakAPIError as exc:
+            if exc.code == EMPTY_RESULT:
+                return []
+            raise
+        return body or []

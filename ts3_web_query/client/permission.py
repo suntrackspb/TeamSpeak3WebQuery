@@ -1,9 +1,8 @@
 from typing import Union
 
 from .http_client import HttpClient
-from ..utils import status_to_error
 from ..types import (
-    TeamSpeakError, PermissionInfo, PermissionId, PermissionValue, PermissionOverview,
+    PermissionInfo, PermissionId, PermissionValue, PermissionOverview,
     PermissionAssignment, PrivilegeKey, CustomProperty,
 )
 
@@ -18,18 +17,14 @@ class Permission:
         self.http_client = http_client
 
     async def _list(self, command: str, model, params=None, json_body=None):
-        response = await self.http_client.request(command, params=params, json_body=json_body)
-        if isinstance(response, list):
-            return [model.from_dict(item) for item in response]
-        if response is None:
-            return []
-        return TeamSpeakError(**response)
+        response = await self.http_client.request_list(command, params=params, json_body=json_body)
+        return [model.from_dict(item) for item in response]
 
-    async def permission_list(self) -> Union[list[PermissionInfo], TeamSpeakError]:
+    async def permission_list(self) -> list[PermissionInfo]:
         """Lists all permissions available on the server instance (ID, name, description)."""
         return await self._list('permissionlist', PermissionInfo)
 
-    async def perm_id_get_by_name(self, permsids: list[str]) -> Union[list[PermissionId], TeamSpeakError]:
+    async def perm_id_get_by_name(self, permsids: list[str]) -> list[PermissionId]:
         """
         Returns the IDs of one or more permissions.
 
@@ -43,7 +38,7 @@ class Permission:
             cid: int,
             cldbid: int,
             perms: list[Union[int, str]] | None = None
-    ) -> Union[list[PermissionOverview], TeamSpeakError]:
+    ) -> list[PermissionOverview]:
         """
         Lists all permissions assigned to a client for a channel.
 
@@ -56,7 +51,7 @@ class Permission:
         body = [{'cid': cid, 'cldbid': cldbid, _perm_key(p): p} for p in perms]
         return await self._list('permoverview', PermissionOverview, json_body=body)
 
-    async def perm_get(self, perms: list[Union[int, str]]) -> Union[list[PermissionValue], TeamSpeakError]:
+    async def perm_get(self, perms: list[Union[int, str]]) -> list[PermissionValue]:
         """
         Returns the current value of permissions for your own connection.
 
@@ -65,9 +60,9 @@ class Permission:
         body = [{_perm_key(p): p} for p in perms]
         return await self._list('permget', PermissionValue, json_body=body)
 
-    async def perm_find(self, perms: list[Union[int, str]]) -> Union[list[PermissionAssignment], TeamSpeakError]:
+    async def perm_find(self, perms: list[Union[int, str]]) -> list[PermissionAssignment]:
         """
-        Lists all assignments of the given permissions. Returns an error with code 1281
+        Lists all assignments of the given permissions. Returns an empty list
         if the permissions are not assigned anywhere.
 
         :param perms: Permissions to find; an int is a permid, a str a permsid.
@@ -75,21 +70,19 @@ class Permission:
         body = [{_perm_key(p): p} for p in perms]
         return await self._list('permfind', PermissionAssignment, json_body=body)
 
-    async def perm_reset(self) -> Union[str, TeamSpeakError]:
+    async def perm_reset(self) -> str:
         """
         Restores the default permission settings on the selected virtual server and creates a new
         initial administrator token. DESTRUCTIVE: if the call fails midway, the virtual server
         is deleted from the database.
 
-        :return: The new administrator token or a TeamSpeakError.
+        :return: The new administrator token.
         """
         response = await self.http_client.request('permreset')
-        if isinstance(response, list):
-            return str(response[0]['token'])
-        return TeamSpeakError(**response)
+        return str(response[0]['token'])
 
-    async def privilege_key_list(self) -> Union[list[PrivilegeKey], TeamSpeakError]:
-        """Lists the privilege keys (tokens). Returns an error with code 1281 if there are none."""
+    async def privilege_key_list(self) -> list[PrivilegeKey]:
+        """Lists the privilege keys (tokens). Returns an empty list if there are none."""
         return await self._list('privilegekeylist', PrivilegeKey)
 
     async def privilege_key_add(
@@ -99,7 +92,7 @@ class Permission:
             tokenid2: int = 0,
             tokendescription: str | None = None,
             tokencustomset: str | None = None
-    ) -> Union[str, TeamSpeakError]:
+    ) -> str:
         """
         Creates a new privilege key.
 
@@ -109,7 +102,7 @@ class Permission:
         :param tokendescription: Optional description.
         :param tokencustomset: Optional escaped set of custom client properties
             (``ident=a value=b|ident=c value=d``).
-        :return: The new token or a TeamSpeakError.
+        :return: The new token.
         """
         params: dict = {'tokentype': tokentype, 'tokenid1': tokenid1, 'tokenid2': tokenid2}
         if tokendescription is not None:
@@ -117,27 +110,23 @@ class Permission:
         if tokencustomset is not None:
             params['tokencustomset'] = tokencustomset
         response = await self.http_client.request('privilegekeyadd', params=params)
-        if isinstance(response, list):
-            return str(response[0]['token'])
-        return TeamSpeakError(**response)
+        return str(response[0]['token'])
 
-    async def privilege_key_delete(self, token: str) -> TeamSpeakError:
+    async def privilege_key_delete(self, token: str) -> None:
         """Deletes a privilege key."""
-        response = await self.http_client.request('privilegekeydelete', params={'token': token})
-        return status_to_error(response)
+        await self.http_client.request('privilegekeydelete', params={'token': token})
 
-    async def privilege_key_use(self, token: str) -> TeamSpeakError:
+    async def privilege_key_use(self, token: str) -> None:
         """Uses a privilege key to gain access to a server or channel group; the key is then deleted."""
-        response = await self.http_client.request('privilegekeyuse', params={'token': token})
-        return status_to_error(response)
+        await self.http_client.request('privilegekeyuse', params={'token': token})
 
-    async def custom_search(self, ident: str, pattern: str) -> Union[list[CustomProperty], TeamSpeakError]:
+    async def custom_search(self, ident: str, pattern: str) -> list[CustomProperty]:
         """
         Searches custom client properties by ident and value pattern (SQL wildcards like % allowed).
-        Returns an error with code 1281 if nothing matches.
+        Returns an empty list if nothing matches.
         """
         return await self._list('customsearch', CustomProperty, params={'ident': ident, 'pattern': pattern})
 
-    async def custom_info(self, cldbid: int) -> Union[list[CustomProperty], TeamSpeakError]:
-        """Lists the custom properties of a client. Returns an error with code 1281 if there are none."""
+    async def custom_info(self, cldbid: int) -> list[CustomProperty]:
+        """Lists the custom properties of a client. Returns an empty list if there are none."""
         return await self._list('custominfo', CustomProperty, params={'cldbid': cldbid})

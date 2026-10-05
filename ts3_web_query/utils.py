@@ -1,7 +1,5 @@
 from urllib.parse import urlencode
 
-from .types.error import TeamSpeakError
-
 
 def build_request(command: str, params: dict | list | None = None) -> str:
     """
@@ -21,43 +19,12 @@ def build_request(command: str, params: dict | list | None = None) -> str:
         The full request string.
     """
     if isinstance(params, list):
-        # Преобразуем список параметров в строку
         param_str = '&'.join(params)
     elif isinstance(params, dict):
-        # Преобразуем словарь параметров в строку с URL-кодировкой
         param_str = urlencode(params)
     else:
         param_str = ''
 
-    # Формируем итоговый запрос
     if param_str:
         return f"{command}?{param_str}"
-    else:
-        return f"{command}"
-
-
-def status_to_error(response) -> TeamSpeakError:
-    """
-    Converts an HttpClient.request() response into a TeamSpeakError.
-
-    On success, commands without a return value have a ``None`` body (JSON
-    ``null``), which cannot be unpacked with ``**``. Some commands (e.g. a private
-    ``sendtextmessage``) answer with a non-empty list body that only echoes a
-    notification; that is a success too. On failure, the response is the status
-    dict (``{"code": int, "message": str}``).
-
-    Parameters
-    ----------
-    response
-        The raw value returned by ``HttpClient.request()``.
-
-    Returns
-    -------
-    TeamSpeakError
-        ``TeamSpeakError(code=0, message='ok')`` if response is ``None`` or a list,
-        otherwise ``TeamSpeakError(**response)``.
-    """
-    if response is None or isinstance(response, list):
-        return TeamSpeakError(code=0, message='ok')
-    return TeamSpeakError(**response)
-
+    return command

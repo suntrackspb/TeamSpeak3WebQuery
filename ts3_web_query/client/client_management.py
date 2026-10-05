@@ -3,9 +3,7 @@ from urllib.parse import urlencode
 
 from .http_client import HttpClient
 from ..constants import ReasonId
-from ..utils import status_to_error
 from ..properties.client_edit import ClientEditProperties
-from ..types import TeamSpeakError
 from ..types.channel import ChannelPermission
 from ..types.client import (
     ClientListItem, ClientInfo, ClientFindResult, ClientDbListItem, ClientDbInfo,
@@ -21,48 +19,41 @@ class ClientManagement:
         self.http_client = http_client
 
     async def _list(self, command: str, model, params=None):
-        response = await self.http_client.request(command, params=params)
-        if isinstance(response, list):
-            return [model.from_dict(item) for item in response]
-        if response is None:
-            return []
-        return TeamSpeakError(**response)
+        response = await self.http_client.request_list(command, params=params)
+        return [model.from_dict(item) for item in response]
 
     async def _one(self, command: str, model, params=None):
         response = await self.http_client.request(command, params=params)
-        if isinstance(response, list):
-            return model.from_dict(response[0])
-        return TeamSpeakError(**response)
+        return model.from_dict(response[0])
 
-    async def client_list(self, flags: list[str] | None = None) -> Union[list[ClientListItem], TeamSpeakError]:
+    async def client_list(self, flags: list[str] | None = None) -> list[ClientListItem]:
         """
         Lists the clients that are currently online.
 
         :param flags: Optional flags without dash, e.g. ['uid', 'away', 'voice', 'times', 'groups',
             'info', 'icon', 'country', 'ip'].
-        :return: List of ClientListItem objects or a TeamSpeakError.
+        :return: List of ClientListItem objects.
         """
         params = [f'-{flag}' for flag in flags] if flags else None
         return await self._list('clientlist', ClientListItem, params)
 
-    async def client_info(self, clid: int) -> Union[ClientInfo, TeamSpeakError]:
+    async def client_info(self, clid: int) -> ClientInfo:
         """Displays detailed configuration information about an online client."""
         return await self._one('clientinfo', ClientInfo, {'clid': clid})
 
-    async def client_find(self, pattern: str) -> Union[list[ClientFindResult], TeamSpeakError]:
+    async def client_find(self, pattern: str) -> list[ClientFindResult]:
         """Finds online clients whose nickname matches the pattern."""
         return await self._list('clientfind', ClientFindResult, {'pattern': pattern})
 
-    async def client_edit(self, clid: int, properties: ClientEditProperties) -> TeamSpeakError:
+    async def client_edit(self, clid: int, properties: ClientEditProperties) -> None:
         """Changes an online client's settings using the given properties."""
-        response = await self.http_client.request('clientedit', params={'clid': clid, **properties})
-        return status_to_error(response)
+        await self.http_client.request('clientedit', params={'clid': clid, **properties})
 
     async def client_db_list(
             self,
             start: int | None = None,
             duration: int | None = None
-    ) -> Union[list[ClientDbListItem], TeamSpeakError]:
+    ) -> list[ClientDbListItem]:
         """
         Lists the client identities known by the server.
 
@@ -76,7 +67,7 @@ class ClientManagement:
             params['duration'] = duration
         return await self._list('clientdblist', ClientDbListItem, params or None)
 
-    async def client_db_info(self, cldbid: int) -> Union[ClientDbInfo, TeamSpeakError]:
+    async def client_db_info(self, cldbid: int) -> ClientDbInfo:
         """Displays database information about a client."""
         return await self._one('clientdbinfo', ClientDbInfo, {'cldbid': cldbid})
 
@@ -84,67 +75,60 @@ class ClientManagement:
             self,
             pattern: str,
             by_uid: bool = False
-    ) -> Union[list[ClientDbFindResult], TeamSpeakError]:
+    ) -> list[ClientDbFindResult]:
         """
         Finds client database entries matching the pattern (nickname, or unique ID with by_uid).
-        Returns an error with code 1281 if nothing matches.
+        Returns an empty list if nothing matches.
         """
         params = [urlencode({'pattern': pattern})]
         if by_uid:
             params.append('-uid')
         return await self._list('clientdbfind', ClientDbFindResult, params)
 
-    async def client_db_edit(self, cldbid: int, properties: ClientEditProperties) -> TeamSpeakError:
+    async def client_db_edit(self, cldbid: int, properties: ClientEditProperties) -> None:
         """Changes a client's database settings using the given properties."""
-        response = await self.http_client.request('clientdbedit', params={'cldbid': cldbid, **properties})
-        return status_to_error(response)
+        await self.http_client.request('clientdbedit', params={'cldbid': cldbid, **properties})
 
-    async def client_db_delete(self, cldbid: int) -> TeamSpeakError:
+    async def client_db_delete(self, cldbid: int) -> None:
         """Deletes a client's database entry."""
-        response = await self.http_client.request('clientdbdelete', params={'cldbid': cldbid})
-        return status_to_error(response)
+        await self.http_client.request('clientdbdelete', params={'cldbid': cldbid})
 
-    async def client_get_ids(self, cluid: str) -> Union[list[ClientId], TeamSpeakError]:
+    async def client_get_ids(self, cluid: str) -> list[ClientId]:
         """Finds the online client IDs for a unique identifier."""
         return await self._list('clientgetids', ClientId, {'cluid': cluid})
 
-    async def client_get_dbid_from_uid(self, cluid: str) -> Union[int, TeamSpeakError]:
+    async def client_get_dbid_from_uid(self, cluid: str) -> int:
         """Returns the database ID for a client unique identifier."""
         response = await self.http_client.request('clientgetdbidfromuid', params={'cluid': cluid})
-        if isinstance(response, list):
-            return int(response[0]['cldbid'])
-        return TeamSpeakError(**response)
+        return int(response[0]['cldbid'])
 
-    async def client_get_name_from_uid(self, cluid: str) -> Union[ClientDbName, TeamSpeakError]:
+    async def client_get_name_from_uid(self, cluid: str) -> ClientDbName:
         """Returns the last known nickname and database ID for a unique identifier."""
         return await self._one('clientgetnamefromuid', ClientDbName, {'cluid': cluid})
 
-    async def client_get_uid_from_clid(self, clid: int) -> Union[ClientUid, TeamSpeakError]:
+    async def client_get_uid_from_clid(self, clid: int) -> ClientUid:
         """Returns the unique identifier of an online client."""
         return await self._one('clientgetuidfromclid', ClientUid, {'clid': clid})
 
-    async def client_get_name_from_dbid(self, cldbid: int) -> Union[ClientDbName, TeamSpeakError]:
+    async def client_get_name_from_dbid(self, cldbid: int) -> ClientDbName:
         """Returns the unique identifier and last known nickname for a database ID."""
         return await self._one('clientgetnamefromdbid', ClientDbName, {'cldbid': cldbid})
 
-    async def client_set_serverquery_login(self, client_login_name: str) -> Union[str, TeamSpeakError]:
+    async def client_set_serverquery_login(self, client_login_name: str) -> str:
         """
         Updates your own ServerQuery login name; the password is auto-generated.
 
-        :return: The generated password or a TeamSpeakError.
+        :return: The generated password.
         """
         response = await self.http_client.request(
             'clientsetserverquerylogin', params={'client_login_name': client_login_name})
-        if isinstance(response, list):
-            return str(response[0]['client_login_password'])
-        return TeamSpeakError(**response)
+        return str(response[0]['client_login_password'])
 
-    async def client_update(self, properties: ClientEditProperties) -> TeamSpeakError:
+    async def client_update(self, properties: ClientEditProperties) -> None:
         """Changes your own ServerQuery client's settings."""
-        response = await self.http_client.request('clientupdate', params=dict(properties))
-        return status_to_error(response)
+        await self.http_client.request('clientupdate', params=dict(properties))
 
-    async def client_move(self, clids: list[int], cid: int, cpw: str | None = None) -> TeamSpeakError:
+    async def client_move(self, clids: list[int], cid: int, cpw: str | None = None) -> None:
         """
         Moves one or more clients to a channel.
 
@@ -155,15 +139,14 @@ class ClientManagement:
         body: dict = {'clid': list(clids), 'cid': cid}
         if cpw is not None:
             body['cpw'] = cpw
-        response = await self.http_client.request('clientmove', json_body=body)
-        return status_to_error(response)
+        await self.http_client.request('clientmove', json_body=body)
 
     async def client_kick(
             self,
             clids: list[int],
             reasonid: int = ReasonId.KICK_FROM_CHANNEL,
             reasonmsg: str | None = None
-    ) -> TeamSpeakError:
+    ) -> None:
         """
         Kicks one or more clients from their channel or from the server.
 
@@ -174,28 +157,26 @@ class ClientManagement:
         body: dict = {'clid': list(clids), 'reasonid': reasonid}
         if reasonmsg is not None:
             body['reasonmsg'] = reasonmsg
-        response = await self.http_client.request('clientkick', json_body=body)
-        return status_to_error(response)
+        await self.http_client.request('clientkick', json_body=body)
 
-    async def client_poke(self, clid: int, msg: str) -> TeamSpeakError:
+    async def client_poke(self, clid: int, msg: str) -> None:
         """Sends a poke message to a client."""
-        response = await self.http_client.request('clientpoke', params={'clid': clid, 'msg': msg})
-        return status_to_error(response)
+        await self.http_client.request('clientpoke', params={'clid': clid, 'msg': msg})
 
     async def client_perm_list(
             self,
             cldbid: int,
             permsid: bool = False
-    ) -> Union[list[ChannelPermission], TeamSpeakError]:
+    ) -> list[ChannelPermission]:
         """
-        Lists the permissions defined for a client. Returns an error with code 1281 if there are none.
+        Lists the permissions defined for a client. Returns an empty list if there are none.
 
         :param permsid: If True, return permission names (permsid) instead of numeric IDs.
         """
         params = [f'cldbid={cldbid}'] + (['-permsid'] if permsid else [])
         return await self._list('clientpermlist', ChannelPermission, params)
 
-    async def client_add_perm(self, cldbid: int, permissions: list[ClientPermEntry]) -> TeamSpeakError:
+    async def client_add_perm(self, cldbid: int, permissions: list[ClientPermEntry]) -> None:
         """
         Adds permissions to a client.
 
@@ -206,11 +187,9 @@ class ClientManagement:
              'permvalue': value, 'permskip': skip}
             for perm, value, skip in permissions
         ]
-        response = await self.http_client.request('clientaddperm', json_body=body)
-        return status_to_error(response)
+        await self.http_client.request('clientaddperm', json_body=body)
 
-    async def client_del_perm(self, cldbid: int, perms: list[Union[int, str]]) -> TeamSpeakError:
+    async def client_del_perm(self, cldbid: int, perms: list[Union[int, str]]) -> None:
         """Removes permissions from a client; an int is a permid, a str a permsid."""
         body = [{'cldbid': cldbid, 'permid' if isinstance(p, int) else 'permsid': p} for p in perms]
-        response = await self.http_client.request('clientdelperm', json_body=body)
-        return status_to_error(response)
+        await self.http_client.request('clientdelperm', json_body=body)

@@ -1,6 +1,6 @@
 import pytest
 
-from ts3_web_query import TeamSpeakConnectionError
+from ts3_web_query import TeamSpeakAPIError, TeamSpeakConnectionError
 from ts3_web_query.client.http_client import HttpClient
 
 from .conftest import fail, ok
@@ -26,9 +26,30 @@ async def test_params_are_sent_in_query(http, server):
     assert server.last.query == 'pattern=a b'  # decoded by the server
 
 
-async def test_error_status_is_returned_not_raised(http, server):
+async def test_error_status_is_raised(http, server):
+    server.reply('banlist', fail(2568, 'insufficient client permissions', 'failed_permid=1'))
+    with pytest.raises(TeamSpeakAPIError) as exc_info:
+        await http.request('banlist')
+    assert (exc_info.value.code, exc_info.value.extra_message) == (2568, 'failed_permid=1')
+    assert str(exc_info.value) == '2568 insufficient client permissions (failed_permid=1)'
+
+
+async def test_request_list_normalises_empty_results(http, server):
     server.reply('banlist', fail(1281, 'database empty result set'))
-    assert await http.request('banlist') == {'code': 1281, 'message': 'database empty result set'}
+    assert await http.request_list('banlist') == []
+    server.reply('banlist', ok(None))
+    assert await http.request_list('banlist') == []
+    server.reply('banlist', ok([{'banid': '1'}]))
+    assert await http.request_list('banlist') == [{'banid': '1'}]
+    server.reply('banlist', fail(2568, 'insufficient client permissions'))
+    with pytest.raises(TeamSpeakAPIError):
+        await http.request_list('banlist')
+
+
+def test_exception_hierarchy():
+    from ts3_web_query import TeamSpeakException
+    assert issubclass(TeamSpeakAPIError, TeamSpeakException)
+    assert issubclass(TeamSpeakConnectionError, TeamSpeakException)
 
 
 async def test_post_when_json_body_given(http, server):

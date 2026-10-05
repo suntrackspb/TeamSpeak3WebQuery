@@ -2,9 +2,8 @@ import asyncio
 import os
 
 from dotenv import load_dotenv
-from ts3_web_query.client import Client
+from ts3_web_query import Client, TeamSpeakAPIError, TeamSpeakConnectionError
 from ts3_web_query.constants import TargetMode
-from ts3_web_query.types import TeamSpeakError
 
 load_dotenv()
 
@@ -13,6 +12,7 @@ async def main():
     async with Client(
         api_url=os.getenv("TS3_API_URL"),
         api_key=os.getenv("TS3_API_KEY"),
+        instance_id=int(os.getenv("TS3_INSTANCE_ID", "1")),
     ) as client:
         # Сервер
         print(await client.server.version())
@@ -24,9 +24,6 @@ async def main():
 
         # Клиенты онлайн (query-клиенты тоже в списке: client_type == 1)
         clients = await client.clients.client_list(["uid", "groups"])
-        if isinstance(clients, TeamSpeakError):
-            print("ошибка:", clients.message)
-            return
         users = [c for c in clients if c.client_type == 0]
         for user in users:
             print(user.clid, user.client_nickname, user.client_servergroups)
@@ -36,14 +33,18 @@ async def main():
         if users:
             await client.messaging.send_private_message(users[0].clid, "Привет!")
 
-        # Ошибки TeamSpeak возвращаются значением, а не исключением.
-        # Пустой список банов — это код 1281, а не пустой список.
-        bans = await client.messaging.ban_list()
-        if isinstance(bans, TeamSpeakError):
-            print("баны:", bans.code, bans.message)
-        else:
-            print(f"банов: {len(bans)}")
+        # Пустой результат — это пустой список, а не ошибка
+        print(f"банов: {len(await client.messaging.ban_list())}")
+
+        # Ошибки TeamSpeak — исключение TeamSpeakAPIError с кодом и сообщением
+        try:
+            await client.channel.channel_info(99999)
+        except TeamSpeakAPIError as exc:
+            print("ошибка сервера:", exc.code, exc.message)
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    try:
+        asyncio.run(main())
+    except TeamSpeakConnectionError as exc:
+        print("нет связи с WebQuery:", exc)

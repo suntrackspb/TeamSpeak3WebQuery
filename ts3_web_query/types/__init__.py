@@ -6,7 +6,6 @@ from .client import (ClientListItem, ClientInfo, ClientFindResult, ClientDbListI
 from .permission import (PermissionInfo, PermissionId, PermissionValue, PermissionOverview,
                          PermissionAssignment, PrivilegeKey, CustomProperty)
 from .messaging import Message, MessageContent, Complaint, BanEntry
-from .error import TeamSpeakError
 
 __all__ = [
     'ServerInfo',
@@ -48,5 +47,4 @@ __all__ = [
     'MessageContent',
     'Complaint',
     'BanEntry',
-    'TeamSpeakError',
 ]

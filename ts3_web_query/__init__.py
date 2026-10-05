@@ -1,9 +1,10 @@
 """Asynchronous Python wrapper for the TeamSpeak 3 HTTP WebQuery API."""
 
 from .client import Client
-from .exceptions import TeamSpeakConnectionError
-from .types import TeamSpeakError
+from . import constants, properties, types
+from .exceptions import TeamSpeakAPIError, TeamSpeakConnectionError, TeamSpeakException
 
-__version__ = '0.1.0'
+__version__ = '0.2.0'
 
-__all__ = ['Client', 'TeamSpeakError', 'TeamSpeakConnectionError', '__version__']
+__all__ = ['Client', 'constants', 'properties', 'types',
+           'TeamSpeakException', 'TeamSpeakAPIError', 'TeamSpeakConnectionError', '__version__']

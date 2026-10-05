@@ -1,11 +1,11 @@
 # ts3-web-query
 
-[Русская версия](README_RU.md)
+[Русская версия](https://github.com/suntrackspb/TeamSpeak3WebQuery/blob/master/README_RU.md)
 
 Async Python wrapper for the **TeamSpeak 3 HTTP WebQuery API** (not the raw telnet/SSH
 ServerQuery). Built on `aiohttp`; commands return typed dataclasses.
 
-> **Status: alpha.** All ServerQuery commands accepted by WebQuery are covered
+> **Status: beta.** All ServerQuery commands accepted by WebQuery are covered
 > (109 of the 130 documented ones); see [Not supported](#not-supported).
 
 ## Requirements
@@ -42,23 +42,45 @@ asyncio.run(main())
 ```
 
 Without `async with`, close the HTTP session yourself: `await client.close()`.
-A complete example is in [examples/basic_usage.py](examples/basic_usage.py).
+A complete example is in [examples/basic_usage.py](https://github.com/suntrackspb/TeamSpeak3WebQuery/blob/master/examples/basic_usage.py).
+
+## Types and IDE hints
+
+```python
+from ts3_web_query import Client
+from ts3_web_query.constants import TargetMode
+from ts3_web_query.properties import ChannelCreateProperties
+from ts3_web_query.types import ServerInfo
+
+props: ChannelCreateProperties = {"channel_name": "Lobby", "channel_flag_permanent": 1}
+cid = await client.channel.channel_create(props)   # int
+
+info = await client.server.server_info()           # ServerInfo: fields are suggested
+print(info.virtualserver_name)
+```
+
+Create/edit properties are `TypedDict`s, so editors and `mypy` check the keys. The package ships `py.typed`.
 
 ## Error handling
 
-- Network failures and unexpected responses raise `ts3_web_query.TeamSpeakConnectionError`.
-- TeamSpeak errors are **not raised**: the method returns
-  `TeamSpeakError(code, message, extra_message)`. Commands without a payload return
-  `TeamSpeakError(code=0, message='ok')` on success.
+All exceptions derive from `ts3_web_query.TeamSpeakException`:
+
+- `TeamSpeakAPIError(code, message, extra_message)`: the server answered with an error, e.g.
+  `2568 insufficient client permissions (failed_permid=17)`.
+- `TeamSpeakConnectionError`: the HTTP request failed, timed out, or the response had an unexpected format.
 
 ```python
-result = await client.channel.channel_delete(cid=5, force=True)
-if result.code != 0:
-    print("failed:", result.message)
+from ts3_web_query import TeamSpeakAPIError
+
+try:
+    await client.channel.channel_delete(cid=5, force=True)
+except TeamSpeakAPIError as exc:
+    print("failed:", exc.code, exc.message)
 ```
 
-An empty result is reported by the server as error 1281 (`database empty result set`),
-so e.g. `ban_list()` with no bans returns `TeamSpeakError(code=1281, ...)`, not an empty list.
+Commands without a payload return `None`. An empty result is an empty list, not an error:
+TeamSpeak reports it as error 1281 (`database empty result set`), which the library maps to `[]`
+for every method that returns a list (`ban_list()` with no bans returns `[]`).
 
 ## Implemented API
 
@@ -80,6 +102,12 @@ Some operations are destructive: `perm_reset` resets the virtual server's permis
 `server_snapshot_deploy` recreates channels and groups (their IDs change), `ban_del_all`
 removes every ban.
 
+## Limitations
+
+- `server_create` is limited by the server license (a second virtual server gives error 2816 without one).
+- `client_set_serverquery_login` does not work over WebQuery: a connection authorized by an API key has no client ID (error 512).
+- Commands of the whole instance (`serverlist`, `servercreate`, `serverdelete`, `serverstart`, `serverstop`, `hostinfo`, `version`, ...) are sent without a virtual server ID in the path; every other command uses `instance_id`.
+
 ## Not supported
 
 - File transfer (`ft*`, 9 commands): WebQuery answers `5120 out of scope` for any API key.
@@ -90,4 +118,4 @@ removes every ban.
 
 ## License
 
-[MIT](LICENSE)
+[MIT](https://github.com/suntrackspb/TeamSpeak3WebQuery/blob/master/LICENSE)

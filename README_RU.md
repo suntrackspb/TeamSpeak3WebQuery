@@ -3,7 +3,7 @@
 Асинхронная Python-обёртка над **HTTP WebQuery API** TeamSpeak 3 (не raw telnet/SSH
 ServerQuery). Построена на `aiohttp`, команды возвращают типизированные dataclass-объекты.
 
-> **Статус: alpha.** Покрыты все команды ServerQuery, которые WebQuery принимает (109 из 130
+> **Статус: beta.** Покрыты все команды ServerQuery, которые WebQuery принимает (109 из 130
 > описанных в официальном ServerQuery-референсе TeamSpeak); что не реализовано и почему — в разделе «Чего нет».
 
 [English version](README.md)
@@ -48,19 +48,43 @@ asyncio.run(main())
 Готовый пример с чтением `TS3_API_URL` / `TS3_API_KEY` из `.env` — в
 [examples/basic_usage.py](examples/basic_usage.py).
 
-## Обработка ошибок
-
-- Сетевые сбои и неожиданный формат ответа поднимают
-  `ts3_web_query.TeamSpeakConnectionError`.
-- Ошибки самого TeamSpeak **не выбрасываются**: метод возвращает
-  `TeamSpeakError(code, message, extra_message)`. Команды без возвращаемого значения при
-  успехе отдают `TeamSpeakError(code=0, message='ok')`.
+## Типы и подсказки в IDE
 
 ```python
-result = await client.channel.channel_delete(cid=5, force=True)
-if result.code != 0:
-    print("не удалось:", result.message)
+from ts3_web_query import Client
+from ts3_web_query.constants import TargetMode
+from ts3_web_query.properties import ChannelCreateProperties
+from ts3_web_query.types import ServerInfo
+
+props: ChannelCreateProperties = {"channel_name": "Lobby", "channel_flag_permanent": 1}
+cid = await client.channel.channel_create(props)   # int
+
+info = await client.server.server_info()           # ServerInfo: поля подсказываются
+print(info.virtualserver_name)
 ```
+
+Свойства для create/edit — `TypedDict`, поэтому редакторы и `mypy` проверяют ключи. В пакете есть `py.typed`.
+
+## Обработка ошибок
+
+Все исключения наследуются от `ts3_web_query.TeamSpeakException`:
+
+- `TeamSpeakAPIError(code, message, extra_message)`: сервер ответил ошибкой, например
+  `2568 insufficient client permissions (failed_permid=17)`.
+- `TeamSpeakConnectionError`: сбой HTTP-запроса, таймаут или неожиданный формат ответа.
+
+```python
+from ts3_web_query import TeamSpeakAPIError
+
+try:
+    await client.channel.channel_delete(cid=5, force=True)
+except TeamSpeakAPIError as exc:
+    print("не удалось:", exc.code, exc.message)
+```
+
+Команды без результата возвращают `None`. Пустой результат — это пустой список, а не ошибка:
+TeamSpeak отдаёт его как ошибку 1281 (`database empty result set`), библиотека превращает её в `[]`
+для всех методов, возвращающих список (`ban_list()` без банов вернёт `[]`).
 
 ## Что реализовано
 
@@ -78,12 +102,15 @@ if result.code != 0:
 под капотом они уходят POST-запросом с JSON, потому что WebQuery молча применяет только первое
 значение из повторяющихся ключей query-строки.
 
-Пустой результат сервер отдаёт как ошибку 1281 (`database empty result set`), поэтому, например,
-`ban_list()` без банов вернёт `TeamSpeakError(code=1281, ...)`, а не пустой список.
-
 Некоторые операции опасны: `perm_reset` сбрасывает права виртуального сервера,
 `server_snapshot_deploy` пересоздаёт каналы и группы (их ID меняются), `ban_del_all` удаляет
 все баны.
+
+## Ограничения
+
+- `server_create` упирается в лицензию сервера (второй виртуальный сервер без неё — ошибка 2816).
+- `client_set_serverquery_login` через WebQuery не работает: у подключения по API-ключу нет clientID (ошибка 512).
+- Команды всего экземпляра (`serverlist`, `servercreate`, `serverdelete`, `serverstart`, `serverstop`, `hostinfo`, `version`, ...) отправляются без номера виртуального сервера в пути; остальные идут через `instance_id`.
 
 ## Чего нет
 
@@ -103,8 +130,8 @@ ts3_web_query/
   types/           # dataclass-модели ответов
   properties/      # TypedDict-наборы свойств для create/edit
   constants.py     # ReasonId, TargetMode, GroupType, LogLevel
-  exceptions.py    # TeamSpeakConnectionError
-  utils.py         # build_request, status_to_error
+  exceptions.py    # TeamSpeakException, TeamSpeakAPIError, TeamSpeakConnectionError
+  utils.py         # build_request
 examples/basic_usage.py
 ```
 
