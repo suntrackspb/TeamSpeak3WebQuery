@@ -1,4 +1,6 @@
 
+from typing import Literal, overload
+
 from .http_client import HttpClient
 from ..properties.server_create import (
     ServerCreateProperties, ServerCreateResponse, ServerEditProperties, InstanceEditProperties,
@@ -258,22 +260,26 @@ class Server:
         response = await self.http_client.request('serversnapshotcreate')
         return ServerSnapshot.from_dict(response[0])
 
-    async def server_snapshot_deploy(
-            self,
-            snapshot: ServerSnapshot,
-            mapping: bool = False
-    ) -> list[dict]:
+    @overload
+    async def server_snapshot_deploy(self, snapshot: ServerSnapshot, mapping: Literal[False] = False) -> None: ...
+
+    @overload
+    async def server_snapshot_deploy(self, snapshot: ServerSnapshot, mapping: Literal[True]) -> list[dict]: ...
+
+    async def server_snapshot_deploy(self, snapshot: ServerSnapshot, mapping: bool = False) -> list[dict] | None:
         """
         Restores the selected virtual server's configuration from a snapshot. The server does NOT
         check permissions while deploying, and the current channels and groups are replaced.
 
         :param snapshot: A snapshot returned by server_snapshot_create.
         :param mapping: If True, the server also returns the old-to-new channel/group ID mapping.
-        :return: The raw mapping entries (empty list without mapping).
+        :return: The raw mapping entries with ``mapping=True``, otherwise ``None``.
         """
         body = {'data': snapshot.data, 'version': snapshot.version}
-        return await self.http_client.request_list(
-            'serversnapshotdeploy', params=['-mapping'] if mapping else None, json_body=body)
+        if mapping:
+            return await self.http_client.request_list('serversnapshotdeploy', params=['-mapping'], json_body=body)
+        await self.http_client.request('serversnapshotdeploy', json_body=body)
+        return None
 
     async def version(self) -> ServerVersion:
         """

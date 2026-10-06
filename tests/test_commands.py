@@ -69,7 +69,7 @@ SERVER = [
     case('server_snapshot_create', lambda c: c.server.server_snapshot_create(), 'serversnapshotcreate',
          body=[{'version': '3', 'data': 'abc'}]),
     case('server_snapshot_deploy', lambda c: c.server.server_snapshot_deploy(ServerSnapshot(version='3', data='abc')),
-         'serversnapshotdeploy', method='POST', json={'data': 'abc', 'version': '3'}, check=lambda r: r == []),
+         'serversnapshotdeploy', method='POST', json={'data': 'abc', 'version': '3'}, check=lambda r: r is None),
     case('server_snapshot_deploy_mapping',
          lambda c: c.server.server_snapshot_deploy(ServerSnapshot(version='3', data='abc'), mapping=True),
          'serversnapshotdeploy', method='POST', query='-mapping', json={'data': 'abc', 'version': '3'},

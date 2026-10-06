@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.2.2
+
+- `server_snapshot_deploy` returns `None` without `mapping` (like other payload-less commands) and the mapping list
+  with `mapping=True` (typed with overloads); error 1281 is no longer silently turned into `[]` there.
+
 ## 0.2.1
 
 - `ClientListItem` exposes voice/info flags (`client_flag_talking`, `client_input_muted`, `client_output_muted`,
