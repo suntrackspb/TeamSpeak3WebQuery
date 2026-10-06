@@ -21,11 +21,30 @@ class ClientListItem:
     client_away: int | None = None
     client_servergroups: list[int] | None = None
     connection_client_ip: str | None = None
+    client_away_message: str | None = None
+    client_flag_talking: int | None = None
+    client_input_muted: int | None = None
+    client_output_muted: int | None = None
+    client_input_hardware: int | None = None
+    client_output_hardware: int | None = None
+    client_is_recording: int | None = None
+    client_is_channel_commander: int | None = None
+    client_is_priority_speaker: int | None = None
+    client_is_talker: int | None = None
+    client_talk_power: int | None = None
+    client_idle_time: int | None = None
+    client_platform: str | None = None
+    client_version: str | None = None
+    client_country: str | None = None
     raw: dict = field(default_factory=dict, repr=False)
 
     @staticmethod
     def from_dict(data: dict) -> 'ClientListItem':
         groups = data.get('client_servergroups')
+
+        def opt(key: str) -> int | None:
+            return _int(data, key) if data.get(key) not in (None, '') else None
+
         return ClientListItem(
             clid=_int(data, 'clid'),
             cid=_int(data, 'cid'),
@@ -36,6 +55,21 @@ class ClientListItem:
             client_away=_int(data, 'client_away') if 'client_away' in data else None,
             client_servergroups=[int(g) for g in str(groups).split(',') if g] if groups is not None else None,
             connection_client_ip=data.get('connection_client_ip'),
+            client_away_message=data.get('client_away_message'),
+            client_flag_talking=opt('client_flag_talking'),
+            client_input_muted=opt('client_input_muted'),
+            client_output_muted=opt('client_output_muted'),
+            client_input_hardware=opt('client_input_hardware'),
+            client_output_hardware=opt('client_output_hardware'),
+            client_is_recording=opt('client_is_recording'),
+            client_is_channel_commander=opt('client_is_channel_commander'),
+            client_is_priority_speaker=opt('client_is_priority_speaker'),
+            client_is_talker=opt('client_is_talker'),
+            client_talk_power=opt('client_talk_power'),
+            client_idle_time=opt('client_idle_time'),
+            client_platform=data.get('client_platform'),
+            client_version=data.get('client_version'),
+            client_country=data.get('client_country'),
             raw=data,
         )
 

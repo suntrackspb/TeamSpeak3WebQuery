@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.2.1
+
+- `ClientListItem` exposes voice/info flags (`client_flag_talking`, `client_input_muted`, `client_output_muted`,
+  `client_talk_power`, `client_platform`, `client_version`, `client_country`, ...) as optional attributes; they are
+  `None` unless requested via `client_list(flags=[...])`.
+- `constants.ErrorCode` with named server error codes (`ErrorCode.INSUFFICIENT_PERMISSIONS == 2568`, ...).
+- Search methods (`client_find`, `channel_find`) and all other list methods return `[]` when nothing is found.
+
 ## 0.2.0
 
 Breaking changes:

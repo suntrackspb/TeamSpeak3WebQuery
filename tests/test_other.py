@@ -48,3 +48,27 @@ async def test_client_can_be_closed_manually():
     c = Client('http://ts3.test:10080', 'k', timeout=5)
     assert c.http_client.timeout == 5
     await c.close()
+
+
+def test_error_codes_match_server_values():
+    from ts3_web_query.constants import ErrorCode
+
+    assert ErrorCode.CLIENT_INVALID_ID == 512
+    assert ErrorCode.CHANNEL_INVALID_ID == 768
+    assert ErrorCode.DATABASE_EMPTY_RESULT == 1281
+    assert ErrorCode.INSUFFICIENT_PERMISSIONS == 2568
+
+
+def test_client_list_voice_flags_are_attributes():
+    from ts3_web_query.types import ClientListItem
+
+    item = ClientListItem.from_dict({
+        'clid': '1', 'cid': '2', 'client_database_id': '3', 'client_nickname': 'a', 'client_type': '0',
+        'client_flag_talking': '1', 'client_input_muted': '0', 'client_talk_power': '75',
+        'client_platform': 'Windows', 'client_version': '3.6',
+    })
+    assert item.client_flag_talking == 1
+    assert item.client_input_muted == 0
+    assert item.client_talk_power == 75
+    assert item.client_platform == 'Windows'
+    assert item.client_is_recording is None
